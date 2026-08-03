@@ -3,8 +3,11 @@ import type { Banco } from "./types";
 import { carregarBanco, salvarBanco } from "./lib/armazenamento";
 import { bancoExemplo } from "./lib/exemplo";
 import { hojeISO } from "./lib/datas";
+import { lembretesPendentes } from "./lib/agenda";
 import { situacaoFerias } from "./lib/ferias";
 import { VisaoGeral } from "./views/VisaoGeral";
+import { Calendario } from "./views/Calendario";
+import { Cargos } from "./views/Cargos";
 import { Pessoas } from "./views/Pessoas";
 import { FeriasView } from "./views/FeriasView";
 import { Processos } from "./views/Processos";
@@ -20,6 +23,8 @@ export interface Dados {
 
 type Tela =
   | "visao"
+  | "calendario"
+  | "cargos"
   | "pessoas"
   | "ferias"
   | "processos"
@@ -29,12 +34,14 @@ type Tela =
 
 const TELAS: { id: Tela; rotulo: string; icone: string }[] = [
   { id: "visao", rotulo: "Visão geral", icone: "◧" },
+  { id: "calendario", rotulo: "Calendário", icone: "▦" },
+  { id: "cargos", rotulo: "Cargos", icone: "▤" },
   { id: "pessoas", rotulo: "Pessoas", icone: "◉" },
   { id: "ferias", rotulo: "Férias", icone: "☀" },
   { id: "processos", rotulo: "Processos", icone: "⚙" },
   { id: "aprovacoes", rotulo: "Aprovações", icone: "✓" },
   { id: "performance", rotulo: "Performance", icone: "▲" },
-  { id: "dados", rotulo: "Dados & Power BI", icone: "⇅" },
+  { id: "dados", rotulo: "Dados & GitHub", icone: "⇅" },
 ];
 
 export default function App() {
@@ -63,23 +70,33 @@ export default function App() {
     const processosProblema = banco.processos.filter(
       (p) => p.status === "Atrasado" || p.status === "Parado",
     ).length;
-    return { aprovacoes: aprovacoesPendentes, ferias: feriasRisco, processos: processosProblema };
+    const rotinas = lembretesPendentes(banco.processos, hoje).length;
+    return {
+      aprovacoes: aprovacoesPendentes,
+      ferias: feriasRisco,
+      processos: processosProblema,
+      rotinas,
+    };
   }, [banco]);
 
   const contadores: Partial<Record<Tela, number>> = {
     aprovacoes: pendencias.aprovacoes,
     ferias: pendencias.ferias,
     processos: pendencias.processos,
+    calendario: pendencias.rotinas,
   };
 
-  const vazio = banco.pessoas.length === 0 && banco.processos.length === 0;
+  const vazio =
+    banco.pessoas.length === 0 &&
+    banco.processos.length === 0 &&
+    banco.cargos.length === 0;
 
   return (
     <>
       <nav className="nav">
         <div className="nav-titulo">
           Painel de Gestão
-          <small>pessoas · processos · performance</small>
+          <small>cargos · pessoas · processos · agenda</small>
         </div>
         {TELAS.map((t) => (
           <button
@@ -93,9 +110,11 @@ export default function App() {
           </button>
         ))}
         <div className="nav-rodape">
-          Dados salvos neste navegador.
+          {banco.git.ultimaSync
+            ? `Sincronizado em ${new Date(banco.git.ultimaSync).toLocaleDateString("pt-BR")}.`
+            : "Dados salvos neste navegador."}
           <br />
-          Backup em “Dados &amp; Power BI”.
+          Backup e GitHub em “Dados &amp; GitHub”.
         </div>
       </nav>
 
@@ -108,6 +127,8 @@ export default function App() {
         ) : (
           <>
             {tela === "visao" && <VisaoGeral dados={dados} />}
+            {tela === "calendario" && <Calendario dados={dados} />}
+            {tela === "cargos" && <Cargos dados={dados} />}
             {tela === "pessoas" && <Pessoas dados={dados} />}
             {tela === "ferias" && <FeriasView dados={dados} />}
             {tela === "processos" && <Processos dados={dados} />}
@@ -132,17 +153,18 @@ function BoasVindas({
     <div className="cartao" style={{ maxWidth: 560, margin: "60px auto", textAlign: "center" }}>
       <h1 style={{ fontSize: 20, marginTop: 8 }}>Bem-vindo ao seu Painel de Gestão</h1>
       <p style={{ color: "var(--ink-2)" }}>
-        Um lugar só para acompanhar sua equipe (férias, salários, atribuições),
-        os processos que cada um roda, sua fila de aprovações e a performance do time.
+        Arquitetura de cargos, quadro de pessoal, férias com substituto formal,
+        rotinas com prazo e ata, fila de aprovações, performance e o calendário
+        que junta tudo.
       </p>
       <p style={{ color: "var(--ink-2)" }}>
-        Comece com dados de exemplo para explorar, ou cadastre sua equipe do zero
-        na aba <strong>Pessoas</strong>. Tudo fica salvo neste navegador — e pode ser
-        exportado para Excel / Power BI a qualquer momento.
+        Comece carregando a <strong>arquitetura da LR Nordeste</strong> — cargos,
+        equipe, KPIs e trilha de carreira já estruturados, com salários e faixas
+        em branco para você preencher.
       </p>
       <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
         <button className="botao primario" onClick={carregarExemplo}>
-          Carregar dados de exemplo
+          Carregar arquitetura LR Nordeste
         </button>
         <button className="botao" onClick={irParaDados}>
           Importar um backup

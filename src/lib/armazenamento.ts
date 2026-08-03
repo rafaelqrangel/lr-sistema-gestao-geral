@@ -6,7 +6,8 @@
  * (um arquivo por entidade, separador ";" que o Excel pt-BR entende).
  */
 
-import { BANCO_VAZIO, VERSAO_BANCO, type Banco } from "../types";
+import { BANCO_VAZIO, chaveCargo, VERSAO_BANCO, type Banco } from "../types";
+import { migrar } from "./migracao";
 
 const CHAVE = "lr-gestao-v1";
 
@@ -14,11 +15,7 @@ export function carregarBanco(): Banco {
   try {
     const bruto = localStorage.getItem(CHAVE);
     if (!bruto) return structuredClone(BANCO_VAZIO);
-    const dados = JSON.parse(bruto) as Banco;
-    if (typeof dados !== "object" || !Array.isArray(dados.pessoas)) {
-      return structuredClone(BANCO_VAZIO);
-    }
-    return { ...structuredClone(BANCO_VAZIO), ...dados, versao: VERSAO_BANCO };
+    return migrar(JSON.parse(bruto));
   } catch {
     return structuredClone(BANCO_VAZIO);
   }
@@ -31,6 +28,11 @@ export function salvarBanco(banco: Banco): void {
 
 export function limparBanco(): void {
   localStorage.removeItem(CHAVE);
+}
+
+/** JSON canônico do banco — o mesmo texto vai para o backup e para o Git. */
+export function serializar(banco: Banco): string {
+  return JSON.stringify({ ...banco, versao: VERSAO_BANCO }, null, 2);
 }
 
 // ------------------------------------------------------------------ Export
@@ -49,7 +51,7 @@ export function exportarJSON(banco: Banco): void {
   const data = new Date().toISOString().slice(0, 10);
   baixarArquivo(
     `painel-gestao-backup-${data}.json`,
-    JSON.stringify(banco, null, 2),
+    serializar(banco),
     "application/json",
   );
 }
@@ -71,14 +73,32 @@ export function exportarCSVs(banco: Banco): void {
   const data = new Date().toISOString().slice(0, 10);
   const nomeDe = (id: string | null) =>
     banco.pessoas.find((p) => p.id === id)?.nome ?? "";
+  const cargoDe = (id: string | null) => {
+    const c = banco.cargos.find((x) => x.id === id);
+    return c ? chaveCargo(c) : "";
+  };
 
   baixarArquivo(
-    `pessoas-${data}.csv`,
+    `cargos-${data}.csv`,
     paraCSV([
-      ["id", "nome", "email", "cargo", "area", "nivel", "regime", "data_admissao", "salario", "gestor", "status", "atribuicoes"],
+      ["id", "chave", "cargo", "nivel", "area", "nivel_hierarquico", "proposito", "atribuicoes", "entregaveis", "reporta_a", "interfaces", "alcada", "requisitos", "vinculo"],
+      ...banco.cargos.map((c) => [
+        c.id, chaveCargo(c), c.nome, c.nivel, c.area, c.nivelHierarquico,
+        c.proposito, c.atribuicoes.join(" | "), c.entregaveis.join(" | "),
+        cargoDe(c.reportaAId), c.interfaces.join(" | "), c.alcada, c.requisitos, c.vinculo,
+      ]),
+    ]),
+    "text/csv",
+  );
+
+  baixarArquivo(
+    `quadro-pessoal-${data}.csv`,
+    paraCSV([
+      ["id", "nome", "email", "cargo", "area", "vinculo", "data_admissao", "salario", "modelo_variavel", "gestor", "substituto", "trilha_eixo", "status", "atribuicoes"],
       ...banco.pessoas.map((p) => [
-        p.id, p.nome, p.email, p.cargo, p.area, p.nivel, p.regime,
-        p.dataAdmissao, p.salario, nomeDe(p.gestorId), p.status,
+        p.id, p.nome, p.email, cargoDe(p.cargoId), p.area, p.regime,
+        p.dataAdmissao, p.salario, p.modeloVariavel, nomeDe(p.gestorId),
+        nomeDe(p.substitutoId), p.trilhaEixo ?? "", p.status,
         p.atribuicoes.join(" | "),
       ]),
     ]),
@@ -86,11 +106,34 @@ export function exportarCSVs(banco: Banco): void {
   );
 
   baixarArquivo(
+    `faixas-salariais-${data}.csv`,
+    paraCSV([
+      ["id", "cargo", "minimo", "medio", "maximo", "ocupantes", "media_praticada", "referencia"],
+      ...banco.faixas.map((f) => {
+        const ocupantes = banco.pessoas.filter(
+          (p) => p.cargoId === f.cargoId && p.status !== "Desligado",
+        );
+        const comSalario = ocupantes.filter((p) => p.salario > 0);
+        const media = comSalario.length
+          ? comSalario.reduce((s, p) => s + p.salario, 0) / comSalario.length
+          : "";
+        return [
+          f.id, cargoDe(f.cargoId), f.minimo, f.medio, f.maximo,
+          ocupantes.length, media, f.referencia,
+        ];
+      }),
+    ]),
+    "text/csv",
+  );
+
+  baixarArquivo(
     `ferias-${data}.csv`,
     paraCSV([
-      ["id", "pessoa", "inicio", "dias", "dias_vendidos", "status", "observacao"],
+      ["id", "pessoa", "inicio", "dias", "dias_vendidos", "status", "substituto", "alcada_substituto", "escalona_para", "observacao"],
       ...banco.ferias.map((f) => [
-        f.id, nomeDe(f.pessoaId), f.inicio, f.dias, f.diasVendidos, f.status, f.observacao,
+        f.id, nomeDe(f.pessoaId), f.inicio, f.dias, f.diasVendidos, f.status,
+        nomeDe(f.substitutoId), f.alcadaSubstituto, nomeDe(f.escalonaParaId),
+        f.observacao,
       ]),
     ]),
     "text/csv",
@@ -99,11 +142,39 @@ export function exportarCSVs(banco: Banco): void {
   baixarArquivo(
     `processos-${data}.csv`,
     paraCSV([
-      ["id", "nome", "area", "dono", "backup", "frequencia", "criticidade", "entregavel", "prazo", "indicador", "meta", "status", "ultima_execucao", "documentado"],
+      ["id", "nome", "area", "dono", "backup", "frequencia", "criticidade", "entregavel", "prazo", "indicador", "meta", "status", "ultima_execucao", "proxima_execucao", "horario", "dias_para_prazo", "documentado"],
       ...banco.processos.map((p) => [
         p.id, p.nome, p.area, nomeDe(p.donoId), nomeDe(p.backupId),
         p.frequencia, p.criticidade, p.entregavel, p.prazo, p.indicador,
-        p.meta, p.status, p.ultimaExecucao, p.documentado,
+        p.meta, p.status, p.ultimaExecucao, p.proximaExecucao, p.horario,
+        p.diasParaPrazo, p.documentado,
+      ]),
+    ]),
+    "text/csv",
+  );
+
+  baixarArquivo(
+    `kpis-${data}.csv`,
+    paraCSV([
+      ["id", "cargo", "kpi", "definicao", "fonte", "meta", "periodicidade", "controla_alavanca", "uso_permitido", "peso", "observacao"],
+      ...banco.kpis.map((k) => [
+        k.id, cargoDe(k.cargoId), k.nome, k.definicao, k.fonte, k.meta,
+        k.periodicidade, k.controla, k.uso, k.peso, k.observacao,
+      ]),
+    ]),
+    "text/csv",
+  );
+
+  baixarArquivo(
+    `atas-${data}.csv`,
+    paraCSV([
+      ["id", "processo", "data", "titulo", "participantes", "decisoes", "encaminhamentos"],
+      ...banco.atas.map((a) => [
+        a.id,
+        banco.processos.find((p) => p.id === a.processoId)?.nome ?? "",
+        a.data, a.titulo,
+        a.participantesIds.map(nomeDe).join(" | "),
+        a.decisoes, a.encaminhamentos,
       ]),
     ]),
     "text/csv",
@@ -145,11 +216,11 @@ export function importarJSON(arquivo: File): Promise<Banco> {
     leitor.onerror = () => reject(new Error("Falha ao ler o arquivo."));
     leitor.onload = () => {
       try {
-        const dados = JSON.parse(String(leitor.result)) as Banco;
-        if (!Array.isArray(dados.pessoas) || !Array.isArray(dados.processos)) {
+        const dados = JSON.parse(String(leitor.result));
+        if (!Array.isArray(dados?.pessoas)) {
           throw new Error("Arquivo não parece um backup do painel.");
         }
-        resolve({ ...structuredClone(BANCO_VAZIO), ...dados, versao: VERSAO_BANCO });
+        resolve(migrar(dados));
       } catch (e) {
         reject(e instanceof Error ? e : new Error("JSON inválido."));
       }

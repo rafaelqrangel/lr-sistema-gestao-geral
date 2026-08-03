@@ -95,3 +95,70 @@ export function Barras({ itens }: { itens: ItemBarra[] }) {
 export function Vazio({ children }: { children: ReactNode }) {
   return <div className="vazio">{children}</div>;
 }
+
+// -------------------------------------------------------------- Sub-abas
+
+export interface Aba<T extends string> {
+  id: T;
+  rotulo: string;
+  contador?: number;
+}
+
+export function Abas<T extends string>({
+  abas,
+  ativa,
+  aoTrocar,
+}: {
+  abas: Aba<T>[];
+  ativa: T;
+  aoTrocar: (id: T) => void;
+}) {
+  return (
+    <div className="filtros">
+      {abas.map((a) => (
+        <button
+          key={a.id}
+          className={`botao mini${ativa === a.id ? " primario" : ""}`}
+          onClick={() => aoTrocar(a.id)}
+        >
+          {a.rotulo}
+          {a.contador !== undefined ? ` (${a.contador})` : ""}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ------------------------------------------------------- Lista multilinha
+
+/**
+ * Edita uma lista de textos curtos (atribuições, entregáveis) como uma
+ * linha por item — mais rápido de digitar do que campos separados.
+ */
+export function ListaTexto({
+  valor,
+  aoMudar,
+  linhas = 3,
+  dica,
+}: {
+  valor: string[];
+  aoMudar: (v: string[]) => void;
+  linhas?: number;
+  dica?: string;
+}) {
+  return (
+    <textarea
+      rows={linhas}
+      placeholder={dica ?? "Um item por linha"}
+      value={valor.join("\n")}
+      onChange={(e) =>
+        aoMudar(
+          e.target.value
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean),
+        )
+      }
+    />
+  );
+}

@@ -1,9 +1,15 @@
 import { useMemo, useState } from "react";
 import type { Dados } from "../App";
-import type { Ferias, RiscoFerias, StatusFerias } from "../types";
+import type { Ferias, RegraBloqueio, RiscoFerias, StatusFerias } from "../types";
 import { Badge, Campo, Modal, Vazio, type TomBadge } from "../components/ui";
 import { fimDoPeriodo, fmtData, fmtDataCurta, hojeISO, sobrepoe } from "../lib/datas";
-import { MAX_DIAS_VENDIDOS, ORDEM_RISCO, situacaoFerias, validarFracionamento } from "../lib/ferias";
+import {
+  detectarConflitos,
+  MAX_DIAS_VENDIDOS,
+  ORDEM_RISCO,
+  situacaoFerias,
+  validarFracionamento,
+} from "../lib/ferias";
 import { fmtDias, novoId } from "../lib/formato";
 
 const TOM_RISCO: Record<RiscoFerias, TomBadge> = {
@@ -24,6 +30,9 @@ function feriasVazia(pessoaId: string): Ferias {
     dias: 30,
     status: "Planejada",
     diasVendidos: 0,
+    substitutoId: null,
+    alcadaSubstituto: "",
+    escalonaParaId: null,
     observacao: "",
   };
 }
@@ -34,6 +43,8 @@ export function FeriasView({ dados }: { dados: Dados }) {
   const [ehNovo, setEhNovo] = useState(false);
 
   const hoje = hojeISO();
+  const nomeDe = (id: string | null) =>
+    banco.pessoas.find((p) => p.id === id)?.nome ?? "—";
 
   const situacoes = useMemo(() => {
     return banco.pessoas
@@ -81,8 +92,31 @@ export function FeriasView({ dados }: { dados: Dados }) {
     if (vendidos > MAX_DIAS_VENDIDOS) {
       lista.push(`Abono acima do limite: ${vendidos} dias vendidos (máximo legal: ${MAX_DIAS_VENDIDOS}).`);
     }
+
+    if (!editando.substitutoId) {
+      lista.push("Sem substituto formal: toda ausência exige quem assume, com alçada escrita.");
+    }
+
+    // Simula o registro em edição contra as regras de bloqueio vigentes.
+    const simulado = [...outras, editando];
+    for (const c of detectarConflitos(simulado, banco.pessoas, banco.cargos, banco.regrasBloqueio)) {
+      if (!c.feriasIds.includes(editando.id)) continue;
+      lista.push(
+        `${c.regra.descricao} Conflito com ${c.pessoas.join(" e ")} entre ${fmtData(c.inicio)} e ${fmtData(c.fim)}.`,
+      );
+    }
     return lista;
-  }, [editando, banco.ferias]);
+  }, [editando, banco.ferias, banco.pessoas, banco.cargos, banco.regrasBloqueio]);
+
+  /** Ausências simultâneas que violam as regras de cobertura. */
+  const conflitos = useMemo(
+    () => detectarConflitos(banco.ferias, banco.pessoas, banco.cargos, banco.regrasBloqueio),
+    [banco.ferias, banco.pessoas, banco.cargos, banco.regrasBloqueio],
+  );
+
+  const semSubstituto = banco.ferias.filter(
+    (f) => f.status !== "Gozada" && !f.substitutoId,
+  ).length;
 
   const salvar = () => {
     if (!editando || !editando.pessoaId) return;
@@ -104,6 +138,14 @@ export function FeriasView({ dados }: { dados: Dados }) {
   const editar = (campo: keyof Ferias, valor: unknown) =>
     setEditando((f) => (f ? { ...f, [campo]: valor } : f));
 
+  const alternarRegra = (regra: RegraBloqueio, ativa: boolean) =>
+    atualizar((b) => ({
+      ...b,
+      regrasBloqueio: b.regrasBloqueio.map((r) =>
+        r.id === regra.id ? { ...r, ativa } : r,
+      ),
+    }));
+
   const pessoasElegiveis = banco.pessoas.filter((p) => p.status !== "Desligado");
 
   return (
@@ -122,8 +164,12 @@ export function FeriasView({ dados }: { dados: Dados }) {
           + Agendar férias
         </button>
         <div className="sub">
-          Situação legal por colaborador CLT e a agenda de períodos. O painel avisa
-          antes do prazo do art. 137 virar pagamento em dobro.
+          Situação legal por colaborador CLT e a agenda de períodos. O campo
+          decisivo não é a data: é o <strong>substituto formal</strong> e a
+          alçada que ele assume.
+          {semSubstituto > 0 && (
+            <> <strong>{semSubstituto} período(s) sem substituto nomeado.</strong></>
+          )}
         </div>
       </div>
 
@@ -196,6 +242,39 @@ export function FeriasView({ dados }: { dados: Dados }) {
         </div>
       </div>
 
+      <div className="cartao" style={{ marginBottom: 14 }}>
+        <h2 style={{ marginTop: 0 }}>Regras de cobertura</h2>
+        {banco.regrasBloqueio.length === 0 ? (
+          <Vazio>Nenhuma regra de bloqueio cadastrada.</Vazio>
+        ) : (
+          <ul className="lista-regras">
+            {banco.regrasBloqueio.map((r) => (
+              <li key={r.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={r.ativa}
+                    onChange={(e) => alternarRegra(r, e.target.checked)}
+                  />
+                  <span className={r.ativa ? "" : "secundario"}>{r.descricao}</span>
+                </label>
+                <span className="secundario"> — alvo: {r.alvo}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {conflitos.length > 0 && (
+          <div className="aviso-legal">
+            {conflitos.map((c, i) => (
+              <div key={i}>
+                ⚠ {c.pessoas.join(" e ")} ausentes juntos de {fmtData(c.inicio)} a{" "}
+                {fmtData(c.fim)} — {c.regra.descricao}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="cartao rolagem-x">
         <h2>Agenda de períodos</h2>
         {agendamentos.length === 0 ? (
@@ -208,8 +287,8 @@ export function FeriasView({ dados }: { dados: Dados }) {
                 <th>Período</th>
                 <th className="num">Dias</th>
                 <th className="num">Vendidos</th>
+                <th>Substituto / alçada</th>
                 <th>Status</th>
-                <th>Observação</th>
               </tr>
             </thead>
             <tbody>
@@ -228,12 +307,24 @@ export function FeriasView({ dados }: { dados: Dados }) {
                   </td>
                   <td className="num">{f.dias}</td>
                   <td className="num">{f.diasVendidos || "—"}</td>
+                  <td style={{ maxWidth: 260 }}>
+                    {f.substitutoId ? (
+                      <>
+                        <div>{nomeDe(f.substitutoId)}</div>
+                        <div className="secundario">
+                          {f.alcadaSubstituto || "alçada não escrita"}
+                          {f.escalonaParaId ? ` · escalona: ${nomeDe(f.escalonaParaId)}` : ""}
+                        </div>
+                      </>
+                    ) : (
+                      <Badge tom="critico">sem substituto</Badge>
+                    )}
+                  </td>
                   <td>
                     <Badge tom={f.status === "Gozada" ? "neutro" : f.status === "Aprovada" ? "bom" : "atencao"}>
                       {f.status}
                     </Badge>
                   </td>
-                  <td className="secundario">{f.observacao || "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -296,6 +387,44 @@ export function FeriasView({ dados }: { dados: Dados }) {
                     <option key={s}>{s}</option>
                   ))}
                 </select>
+              </Campo>
+              <Campo label="Substituto formal">
+                <select
+                  value={editando.substitutoId ?? ""}
+                  onChange={(e) => editar("substitutoId", e.target.value || null)}
+                >
+                  <option value="">— não definido</option>
+                  {pessoasElegiveis
+                    .filter((p) => p.id !== editando.pessoaId)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nome}
+                      </option>
+                    ))}
+                </select>
+              </Campo>
+              <Campo label="Escalona para">
+                <select
+                  value={editando.escalonaParaId ?? ""}
+                  onChange={(e) => editar("escalonaParaId", e.target.value || null)}
+                >
+                  <option value="">— você</option>
+                  {pessoasElegiveis
+                    .filter((p) => p.id !== editando.pessoaId)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nome}
+                      </option>
+                    ))}
+                </select>
+              </Campo>
+              <Campo label="Alçada assumida pelo substituto — o que pode e o que não pode decidir" largo>
+                <textarea
+                  rows={2}
+                  value={editando.alcadaSubstituto}
+                  onChange={(e) => editar("alcadaSubstituto", e.target.value)}
+                  placeholder="Ex.: aprova pedido dentro da tabela; não aprova exceção de preço"
+                />
               </Campo>
               <Campo label="Observação" largo>
                 <input

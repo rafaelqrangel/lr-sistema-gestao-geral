@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import type { Dados } from "../App";
 import { Badge, Barras } from "../components/ui";
-import { diasEntre, fmtPrazo, hojeISO } from "../lib/datas";
-import { ORDEM_RISCO, situacaoFerias } from "../lib/ferias";
+import { diasEntre, fmtDataCurta, fmtPrazo, hojeISO } from "../lib/datas";
+import { detectarConflitos, ORDEM_RISCO, situacaoFerias } from "../lib/ferias";
+import { lembretesPendentes } from "../lib/agenda";
+import { usoKpiValido } from "../types";
 import { fmtBRL, fmtDias, fmtNum } from "../lib/formato";
 
 interface Alerta {
@@ -99,6 +101,53 @@ export function VisaoGeral({ dados }: { dados: Dados }) {
       }
     }
 
+    // Rotinas cujo lembrete disparou ou cujo prazo final já passou.
+    for (const l of lembretesPendentes(banco.processos, hoje)) {
+      if (l.atrasado) {
+        alertas.push({
+          gravidade: "serio",
+          quem: l.processo.nome,
+          texto: `prazo final era ${fmtDataCurta(l.prazoFinal)} e não há execução registrada — dono: ${nomeDe(l.processo.donoId)}`,
+        });
+      } else {
+        alertas.push({
+          gravidade: "atencao",
+          quem: l.processo.nome,
+          texto: `acontece ${l.diasAte === 0 ? "hoje" : `em ${fmtDias(l.diasAte)}`}${l.processo.horario ? ` às ${l.processo.horario}` : ""} — dono: ${nomeDe(l.processo.donoId)}`,
+        });
+      }
+    }
+
+    // Ausências simultâneas que violam as regras de cobertura.
+    for (const c of detectarConflitos(
+      banco.ferias, banco.pessoas, banco.cargos, banco.regrasBloqueio,
+    )) {
+      alertas.push({
+        gravidade: "serio",
+        quem: "Cobertura de férias",
+        texto: `${c.pessoas.join(" e ")} ausentes juntos de ${fmtDataCurta(c.inicio)} a ${fmtDataCurta(c.fim)} — ${c.regra.descricao}`,
+      });
+    }
+
+    for (const f of banco.ferias) {
+      if (f.status === "Gozada" || f.substitutoId) continue;
+      alertas.push({
+        gravidade: "atencao",
+        quem: nomeDe(f.pessoaId),
+        texto: `férias a partir de ${fmtDataCurta(f.inicio)} sem substituto formal nomeado`,
+      });
+    }
+
+    // KPI cobrado de quem não controla a alavanca.
+    for (const k of banco.kpis.filter((x) => !usoKpiValido(x))) {
+      const cargo = banco.cargos.find((c) => c.id === k.cargoId);
+      alertas.push({
+        gravidade: "serio",
+        quem: cargo ? `${cargo.nome} · ${cargo.nivel}` : "KPI",
+        texto: `"${k.nome}" está como "${k.uso}" mas o ocupante controla a alavanca apenas "${k.controla}" — rebaixar para acompanhamento`,
+      });
+    }
+
     const peso = { critico: 0, serio: 1, atencao: 2 } as const;
     alertas.sort((a, b) => peso[a.gravidade] - peso[b.gravidade]);
 
@@ -117,6 +166,7 @@ export function VisaoGeral({ dados }: { dados: Dados }) {
     const fila = [...pendentes].sort((a, b) => a.prazoResposta.localeCompare(b.prazoResposta));
 
     return {
+      rotinasAgora: lembretesPendentes(banco.processos, hoje).length,
       ativos: ativos.length,
       emFerias: ativos.filter((p) => p.status === "Férias").length,
       folha,
@@ -163,6 +213,11 @@ export function VisaoGeral({ dados }: { dados: Dados }) {
           <div className="rotulo">Processos com problema</div>
           <div className="valor">{resumo.processosProblema}</div>
           <div className="apoio">atrasados ou parados</div>
+        </div>
+        <div className={`cartao kpi${resumo.rotinasAgora > 0 ? " alerta" : ""}`}>
+          <div className="rotulo">Rotinas na janela</div>
+          <div className="valor">{resumo.rotinasAgora}</div>
+          <div className="apoio">no lembrete ou fora do prazo</div>
         </div>
       </div>
 

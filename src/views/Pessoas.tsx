@@ -1,16 +1,21 @@
-import { useMemo, useState } from "react";
-import type { Dados } from "../App";
-import type { Nivel, Pessoa, Regime, StatusPessoa } from "../types";
-import { Badge, Campo, Modal, Vazio, type TomBadge } from "../components/ui";
-import { fmtData, hojeISO } from "../lib/datas";
-import { situacaoFerias } from "../lib/ferias";
-import { fmtBRL, novoId } from "../lib/formato";
+/**
+ * Quadro de pessoal — quem ocupa cada cargo.
+ *
+ * A pessoa não carrega descrição de função: isso mora no cargo. Aqui ficam
+ * vínculo, salário (e sua posição na faixa), gestor, substituto formal e
+ * eixo de carreira.
+ */
 
-const NIVEIS: Nivel[] = [
-  "Estagiário", "Assistente", "Analista Júnior", "Analista Pleno",
-  "Analista Sênior", "Especialista", "Coordenador", "Gerente",
-];
-const REGIMES: Regime[] = ["CLT", "PJ", "Estágio", "Aprendiz", "Terceiro"];
+import { useMemo, useState } from "react";
+import type { EixoTrilha, Pessoa, Regime, StatusPessoa } from "../types";
+import { chaveCargo, posicaoNaFaixa } from "../types";
+import type { Dados } from "../App";
+import { Badge, Campo, ListaTexto, Modal, Vazio, type TomBadge } from "../components/ui";
+import { hojeISO, mesesEntre } from "../lib/datas";
+import { situacaoFerias } from "../lib/ferias";
+import { fmtBRL, fmtNum, novoId } from "../lib/formato";
+
+const REGIMES: Regime[] = ["CLT", "PJ", "PJ / Representação", "Estágio", "Aprendiz", "Terceiro"];
 const STATUS: StatusPessoa[] = ["Ativo", "Férias", "Afastado", "Desligado"];
 
 const TOM_STATUS: Record<StatusPessoa, TomBadge> = {
@@ -25,13 +30,15 @@ function pessoaVazia(): Pessoa {
     id: novoId("p"),
     nome: "",
     email: "",
-    cargo: "",
+    cargoId: null,
     area: "",
-    nivel: "Analista Pleno",
     regime: "CLT",
     dataAdmissao: hojeISO(),
     salario: 0,
+    modeloVariavel: "",
     gestorId: null,
+    substitutoId: null,
+    trilhaEixo: null,
     status: "Ativo",
     atribuicoes: [],
     observacoes: "",
@@ -45,6 +52,11 @@ export function Pessoas({ dados }: { dados: Dados }) {
   const [filtroArea, setFiltroArea] = useState("");
   const [busca, setBusca] = useState("");
   const [mostrarDesligados, setMostrarDesligados] = useState(false);
+  const [mostrarSalarios, setMostrarSalarios] = useState(false);
+
+  const hoje = hojeISO();
+  const cargoDe = (id: string | null) => banco.cargos.find((c) => c.id === id);
+  const nomeDe = (id: string | null) => banco.pessoas.find((p) => p.id === id)?.nome ?? "—";
 
   const areas = useMemo(
     () => [...new Set(banco.pessoas.map((p) => p.area).filter(Boolean))].sort(),
@@ -56,13 +68,22 @@ export function Pessoas({ dados }: { dados: Dados }) {
     return banco.pessoas
       .filter((p) => (mostrarDesligados ? true : p.status !== "Desligado"))
       .filter((p) => (filtroArea ? p.area === filtroArea : true))
-      .filter((p) =>
-        termo
-          ? [p.nome, p.cargo, p.area, ...p.atribuicoes].join(" ").toLowerCase().includes(termo)
-          : true,
-      )
-      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-  }, [banco.pessoas, filtroArea, busca, mostrarDesligados]);
+      .filter((p) => {
+        if (!termo) return true;
+        const cargo = cargoDe(p.cargoId);
+        return (
+          p.nome.toLowerCase().includes(termo) ||
+          p.area.toLowerCase().includes(termo) ||
+          (cargo ? chaveCargo(cargo).toLowerCase().includes(termo) : false)
+        );
+      })
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [banco.pessoas, banco.cargos, filtroArea, busca, mostrarDesligados]);
+
+  const ativos = banco.pessoas.filter((p) => p.status !== "Desligado");
+  const folha = ativos.reduce((s, p) => s + p.salario, 0);
+  const semCargo = ativos.filter((p) => !p.cargoId).length;
+  const semAdmissao = ativos.filter((p) => !p.dataAdmissao).length;
 
   const salvar = () => {
     if (!editando || !editando.nome.trim()) return;
@@ -76,30 +97,20 @@ export function Pessoas({ dados }: { dados: Dados }) {
   };
 
   const excluir = () => {
-    if (!editando) return;
-    const temVinculos =
-      banco.ferias.some((f) => f.pessoaId === editando.id) ||
-      banco.processos.some((p) => p.donoId === editando.id) ||
-      banco.avaliacoes.some((a) => a.pessoaId === editando.id);
-    const msg = temVinculos
-      ? `${editando.nome} tem férias, processos ou avaliações vinculados, que também serão removidos. Excluir mesmo assim?\n\nDica: para preservar o histórico, use o status "Desligado" em vez de excluir.`
-      : `Excluir ${editando.nome}?`;
-    if (!window.confirm(msg)) return;
+    if (!editando || !window.confirm(`Excluir ${editando.nome}? As férias e avaliações dela também serão removidas.`)) {
+      return;
+    }
     atualizar((b) => ({
       ...b,
-      pessoas: b.pessoas.map((p) =>
-        p.gestorId === editando.id ? { ...p, gestorId: null } : p,
-      ).filter((p) => p.id !== editando.id),
+      pessoas: b.pessoas.filter((p) => p.id !== editando.id),
       ferias: b.ferias.filter((f) => f.pessoaId !== editando.id),
       avaliacoes: b.avaliacoes.filter((a) => a.pessoaId !== editando.id),
+      // Referências cruzadas ficam órfãs se não forem limpas junto.
       processos: b.processos.map((pr) => ({
         ...pr,
         donoId: pr.donoId === editando.id ? null : pr.donoId,
         backupId: pr.backupId === editando.id ? null : pr.backupId,
-      })),
-      aprovacoes: b.aprovacoes.map((a) => ({
-        ...a,
-        solicitanteId: a.solicitanteId === editando.id ? null : a.solicitanteId,
+        participantesIds: pr.participantesIds.filter((i) => i !== editando.id),
       })),
     }));
     setEditando(null);
@@ -111,7 +122,7 @@ export function Pessoas({ dados }: { dados: Dados }) {
   return (
     <>
       <div className="pagina-cabecalho">
-        <h1>Pessoas</h1>
+        <h1>Quadro de pessoal</h1>
         <div className="espaco" />
         <button
           className="botao primario"
@@ -120,19 +131,21 @@ export function Pessoas({ dados }: { dados: Dados }) {
             setEditando(pessoaVazia());
           }}
         >
-          + Nova pessoa
+          + Adicionar pessoa
         </button>
         <div className="sub">
-          Cadastro da equipe: cargo, salário, atribuições e situação de férias.
+          {ativos.length} pessoa(s) ativa(s)
+          {mostrarSalarios ? ` · folha mensal ${fmtBRL(folha)}` : ""}
+          {semCargo > 0 ? ` · ${semCargo} sem cargo definido` : ""}
+          {semAdmissao > 0 ? ` · ${semAdmissao} sem data de admissão` : ""}
         </div>
       </div>
 
       <div className="filtros">
         <input
-          placeholder="Buscar por nome, cargo ou atribuição…"
+          placeholder="Buscar por nome, cargo ou área…"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          style={{ minWidth: 240 }}
         />
         <select value={filtroArea} onChange={(e) => setFiltroArea(e.target.value)}>
           <option value="">Todas as áreas</option>
@@ -140,117 +153,188 @@ export function Pessoas({ dados }: { dados: Dados }) {
             <option key={a}>{a}</option>
           ))}
         </select>
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={mostrarDesligados}
-            onChange={(e) => setMostrarDesligados(e.target.checked)}
-          />
-          incluir desligados
-        </label>
+        <button
+          className={`botao mini${mostrarDesligados ? " primario" : ""}`}
+          onClick={() => setMostrarDesligados((v) => !v)}
+        >
+          Incluir desligados
+        </button>
+        <button
+          className={`botao mini${mostrarSalarios ? " primario" : ""}`}
+          onClick={() => setMostrarSalarios((v) => !v)}
+        >
+          {mostrarSalarios ? "Ocultar salários" : "Mostrar salários"}
+        </button>
       </div>
 
       <div className="cartao rolagem-x">
         {lista.length === 0 ? (
-          <Vazio>Nenhuma pessoa encontrada com esses filtros.</Vazio>
+          <Vazio>Nenhuma pessoa encontrada.</Vazio>
         ) : (
           <table className="tabela">
             <thead>
               <tr>
-                <th>Nome</th>
+                <th>Pessoa</th>
+                <th>Cargo</th>
                 <th>Área</th>
-                <th>Nível / Regime</th>
-                <th className="num">Salário</th>
-                <th>Admissão</th>
+                <th>Vínculo</th>
+                <th className="num">Casa</th>
+                {mostrarSalarios && <th className="num">Salário</th>}
+                {mostrarSalarios && <th className="num">Posição na faixa</th>}
+                <th>Gestor</th>
+                <th>Substituto</th>
+                <th>Férias</th>
                 <th>Status</th>
-                <th>Atribuições</th>
               </tr>
             </thead>
             <tbody>
-              {lista.map((p) => (
-                <tr
-                  key={p.id}
-                  className="clicavel"
-                  onClick={() => {
-                    setEhNovo(false);
-                    setEditando({ ...p });
-                  }}
-                >
-                  <td>
-                    <div className="principal">{p.nome}</div>
-                    <div className="secundario">{p.cargo}</div>
-                  </td>
-                  <td>{p.area || "—"}</td>
-                  <td>
-                    <div>{p.nivel}</div>
-                    <div className="secundario">{p.regime}</div>
-                  </td>
-                  <td className="num">{fmtBRL(p.salario)}</td>
-                  <td>{fmtData(p.dataAdmissao)}</td>
-                  <td>
-                    <Badge tom={TOM_STATUS[p.status]}>{p.status}</Badge>
-                  </td>
-                  <td style={{ maxWidth: 260 }}>
-                    <div className="chips-atribuicoes">
-                      {p.atribuicoes.slice(0, 3).map((a, i) => (
-                        <span key={i} className="chip">{a}</span>
-                      ))}
-                      {p.atribuicoes.length > 3 && (
-                        <span className="chip">+{p.atribuicoes.length - 3}</span>
+              {lista.map((p) => {
+                const cargo = cargoDe(p.cargoId);
+                const faixa = banco.faixas.find((f) => f.cargoId === p.cargoId);
+                const posicao =
+                  faixa && p.salario > 0 ? posicaoNaFaixa(p.salario, faixa) : null;
+                const meses = p.dataAdmissao ? mesesEntre(p.dataAdmissao, hoje) : null;
+                const sit =
+                  p.regime === "CLT" && p.dataAdmissao
+                    ? situacaoFerias(p, banco.ferias.filter((f) => f.pessoaId === p.id), hoje)
+                    : null;
+                return (
+                  <tr
+                    key={p.id}
+                    className="clicavel"
+                    onClick={() => {
+                      setEhNovo(false);
+                      setEditando({ ...p });
+                    }}
+                  >
+                    <td>
+                      <div className="principal">{p.nome}</div>
+                      <div className="secundario">{p.email || "sem e-mail"}</div>
+                    </td>
+                    <td>
+                      {cargo ? (
+                        <>
+                          <div>{cargo.nome}</div>
+                          <div className="secundario">{cargo.nivel}</div>
+                        </>
+                      ) : (
+                        <Badge tom="atencao">Sem cargo</Badge>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td>{p.area}</td>
+                    <td>{p.regime}</td>
+                    <td className="num">
+                      {meses === null ? "—" : `${Math.floor(meses / 12)}a ${meses % 12}m`}
+                    </td>
+                    {mostrarSalarios && (
+                      <td className="num">{p.salario ? fmtBRL(p.salario) : "—"}</td>
+                    )}
+                    {mostrarSalarios && (
+                      <td className="num">
+                        {posicao === null ? (
+                          "—"
+                        ) : (
+                          <Badge
+                            tom={posicao < 0 || posicao > 100 ? "critico" : "neutro"}
+                          >
+                            {fmtNum(posicao)}%
+                          </Badge>
+                        )}
+                      </td>
+                    )}
+                    <td>{nomeDe(p.gestorId)}</td>
+                    <td>
+                      {p.substitutoId ? (
+                        nomeDe(p.substitutoId)
+                      ) : (
+                        <span className="secundario">—</span>
+                      )}
+                    </td>
+                    <td>
+                      {sit ? (
+                        <Badge
+                          tom={
+                            sit.risco === "Vencido" || sit.risco === "Crítico"
+                              ? "critico"
+                              : sit.risco === "Atenção"
+                                ? "atencao"
+                                : "neutro"
+                          }
+                        >
+                          {sit.risco}
+                        </Badge>
+                      ) : (
+                        <span className="secundario">—</span>
+                      )}
+                    </td>
+                    <td>
+                      <Badge tom={TOM_STATUS[p.status]}>{p.status}</Badge>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
       </div>
 
       <Modal
-        titulo={ehNovo ? "Nova pessoa" : `Editar — ${editando?.nome || ""}`}
+        titulo={ehNovo ? "Adicionar pessoa" : "Editar pessoa"}
         aberto={editando !== null}
         aoFechar={() => setEditando(null)}
       >
         {editando && (
           <>
             <div className="form-grade">
-              <Campo label="Nome completo" largo>
+              <Campo label="Nome" largo>
                 <input
                   value={editando.nome}
                   onChange={(e) => editar("nome", e.target.value)}
                   autoFocus={ehNovo}
                 />
               </Campo>
-              <Campo label="E-mail">
-                <input value={editando.email} onChange={(e) => editar("email", e.target.value)} />
+              <Campo label="E-mail corporativo" largo>
+                <input
+                  value={editando.email}
+                  onChange={(e) => editar("email", e.target.value)}
+                  placeholder="nome.sobrenome@lr.com.br"
+                />
               </Campo>
               <Campo label="Cargo">
-                <input value={editando.cargo} onChange={(e) => editar("cargo", e.target.value)} />
-              </Campo>
-              <Campo label="Área">
-                <input
-                  value={editando.area}
-                  onChange={(e) => editar("area", e.target.value)}
-                  list="lista-areas"
-                />
-                <datalist id="lista-areas">
-                  {areas.map((a) => (
-                    <option key={a} value={a} />
-                  ))}
-                </datalist>
-              </Campo>
-              <Campo label="Nível">
                 <select
-                  value={editando.nivel}
-                  onChange={(e) => editar("nivel", e.target.value as Nivel)}
+                  value={editando.cargoId ?? ""}
+                  onChange={(e) => {
+                    const id = e.target.value || null;
+                    const cargo = banco.cargos.find((c) => c.id === id);
+                    setEditando((p) =>
+                      p
+                        ? {
+                            ...p,
+                            cargoId: id,
+                            // Herda área e vínculo do cargo quando ainda em branco.
+                            area: p.area || (cargo?.area ?? ""),
+                            regime: cargo?.vinculo ?? p.regime,
+                          }
+                        : p,
+                    );
+                  }}
                 >
-                  {NIVEIS.map((n) => (
-                    <option key={n}>{n}</option>
+                  <option value="">— sem cargo</option>
+                  {banco.cargos.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {chaveCargo(c)}
+                    </option>
                   ))}
                 </select>
               </Campo>
-              <Campo label="Regime">
+              <Campo label="Área / regional">
+                <input
+                  value={editando.area}
+                  onChange={(e) => editar("area", e.target.value)}
+                  placeholder="Comercial - Regional NORDESTE"
+                />
+              </Campo>
+              <Campo label="Vínculo">
                 <select
                   value={editando.regime}
                   onChange={(e) => editar("regime", e.target.value as Regime)}
@@ -267,12 +351,20 @@ export function Pessoas({ dados }: { dados: Dados }) {
                   onChange={(e) => editar("dataAdmissao", e.target.value)}
                 />
               </Campo>
-              <Campo label="Salário mensal (R$)">
+              <Campo label="Salário fixo (R$)">
                 <input
                   type="number"
                   min={0}
+                  step="100"
                   value={editando.salario || ""}
                   onChange={(e) => editar("salario", Number(e.target.value))}
+                />
+              </Campo>
+              <Campo label="Modelo de variável">
+                <input
+                  value={editando.modeloVariavel}
+                  onChange={(e) => editar("modeloVariavel", e.target.value)}
+                  placeholder="Ex.: até 3 salários/ano por atingimento"
                 />
               </Campo>
               <Campo label="Gestor direto">
@@ -280,7 +372,7 @@ export function Pessoas({ dados }: { dados: Dados }) {
                   value={editando.gestorId ?? ""}
                   onChange={(e) => editar("gestorId", e.target.value || null)}
                 >
-                  <option value="">Eu (usuário do painel)</option>
+                  <option value="">— (reporta a você)</option>
                   {banco.pessoas
                     .filter((p) => p.id !== editando.id && p.status !== "Desligado")
                     .map((p) => (
@@ -288,6 +380,33 @@ export function Pessoas({ dados }: { dados: Dados }) {
                         {p.nome}
                       </option>
                     ))}
+                </select>
+              </Campo>
+              <Campo label="Substituto formal">
+                <select
+                  value={editando.substitutoId ?? ""}
+                  onChange={(e) => editar("substitutoId", e.target.value || null)}
+                >
+                  <option value="">— não definido</option>
+                  {banco.pessoas
+                    .filter((p) => p.id !== editando.id && p.status !== "Desligado")
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nome}
+                      </option>
+                    ))}
+                </select>
+              </Campo>
+              <Campo label="Eixo de carreira">
+                <select
+                  value={editando.trilhaEixo ?? ""}
+                  onChange={(e) =>
+                    editar("trilhaEixo", (e.target.value || null) as EixoTrilha | null)
+                  }
+                >
+                  <option value="">— não posicionado</option>
+                  <option value="Técnico">Técnico</option>
+                  <option value="Gestão">Gestão</option>
                 </select>
               </Campo>
               <Campo label="Status">
@@ -300,30 +419,27 @@ export function Pessoas({ dados }: { dados: Dados }) {
                   ))}
                 </select>
               </Campo>
-              <Campo label="Atribuições (uma por linha)" largo>
-                <textarea
-                  rows={4}
-                  value={editando.atribuicoes.join("\n")}
-                  onChange={(e) =>
-                    editar(
-                      "atribuicoes",
-                      e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
-                    )
-                  }
-                  placeholder={"Ex.:\nFechamento mensal de vendas\nGestão da carteira de clientes-chave"}
+              <Campo label="Atribuições específicas desta pessoa (uma por linha)" largo>
+                <ListaTexto
+                  valor={editando.atribuicoes}
+                  aoMudar={(v) => editar("atribuicoes", v)}
+                  dica="Além das atribuições do cargo — ex.: Conta Grupo Mateus"
                 />
               </Campo>
               <Campo label="Observações" largo>
-                <textarea
-                  rows={2}
+                <input
                   value={editando.observacoes}
                   onChange={(e) => editar("observacoes", e.target.value)}
                 />
               </Campo>
             </div>
 
-            {!ehNovo && editando.regime === "CLT" && editando.status !== "Desligado" && (
-              <ResumoFerias dados={dados} pessoa={editando} />
+            {editando.cargoId && (
+              <p className="sub">
+                Propósito, atribuições núcleo e alçada vêm do cargo — edite em{" "}
+                <strong>Arquitetura de cargos</strong> para valer a todos os
+                ocupantes.
+              </p>
             )}
 
             <div className="modal-acoes">
@@ -335,7 +451,11 @@ export function Pessoas({ dados }: { dados: Dados }) {
               <button className="botao" onClick={() => setEditando(null)}>
                 Cancelar
               </button>
-              <button className="botao primario" onClick={salvar} disabled={!editando.nome.trim()}>
+              <button
+                className="botao primario"
+                onClick={salvar}
+                disabled={!editando.nome.trim()}
+              >
                 Salvar
               </button>
             </div>
@@ -343,20 +463,5 @@ export function Pessoas({ dados }: { dados: Dados }) {
         )}
       </Modal>
     </>
-  );
-}
-
-function ResumoFerias({ dados, pessoa }: { dados: Dados; pessoa: Pessoa }) {
-  const s = situacaoFerias(
-    pessoa,
-    dados.banco.ferias.filter((f) => f.pessoaId === pessoa.id),
-  );
-  return (
-    <div className="aviso-legal">
-      <strong>Férias:</strong>{" "}
-      {s.emAquisicao
-        ? `em aquisição do primeiro período — ${s.diasDireito} dias proporcionais até agora.`
-        : `saldo de ${s.saldo} dias do período ${fmtData(s.aquisitivoInicio)} → ${fmtData(s.aquisitivoFim)}; limite legal para gozo: ${fmtData(s.limiteGozo)} (${s.risco}).`}
-    </div>
   );
 }

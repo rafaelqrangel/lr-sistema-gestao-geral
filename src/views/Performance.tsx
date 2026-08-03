@@ -128,6 +128,10 @@ export function Performance({ dados }: { dados: Dados }) {
     );
 
   const pessoasAtivas = banco.pessoas.filter((p) => p.status !== "Desligado");
+  const nomeCargo = (id: string | null) => {
+    const c = banco.cargos.find((x) => x.id === id);
+    return c ? `${c.nome} · ${c.nivel}` : "sem cargo";
+  };
 
   return (
     <>
@@ -202,7 +206,7 @@ export function Performance({ dados }: { dados: Dados }) {
                     <td>
                       <div className="principal">{pessoa!.nome}</div>
                       <div className="secundario">
-                        {pessoa!.cargo} · avaliado em {fmtDataCurta(a.data)}
+                        {nomeCargo(pessoa!.cargoId)} · avaliado em {fmtDataCurta(a.data)}
                       </div>
                     </td>
                     {(Object.keys(COMPETENCIA_LABELS) as (keyof Competencias)[]).map((k) => (

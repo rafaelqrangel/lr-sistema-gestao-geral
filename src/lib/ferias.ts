@@ -19,8 +19,16 @@
  *    enxergar o compromisso e não só o passado.
  */
 
-import type { Ferias, Pessoa, RiscoFerias, SituacaoFerias } from "../types";
-import { diasEntre, hojeISO, mesesEntre, somarMeses } from "./datas";
+import type {
+  Cargo,
+  ConflitoFerias,
+  Ferias,
+  Pessoa,
+  RegraBloqueio,
+  RiscoFerias,
+  SituacaoFerias,
+} from "../types";
+import { diasEntre, fimDoPeriodo, hojeISO, mesesEntre, somarMeses, sobrepoe } from "./datas";
 
 export const DIAS_POR_PERIODO = 30;
 export const MAX_DIAS_VENDIDOS = 10;
@@ -167,4 +175,70 @@ export function validarFracionamento(dias: number[]): string[] {
     }
   }
   return problemas;
+}
+
+// ------------------------------------------------------ Regras de bloqueio
+
+/** O texto do alvo aparece na área da pessoa ou no nome do cargo dela? */
+function casaAlvo(
+  alvo: string,
+  pessoa: Pessoa,
+  cargo: Cargo | undefined,
+): boolean {
+  const chave = alvo.trim().toLowerCase();
+  if (!chave) return false;
+  const campos = [pessoa.area, cargo?.nome ?? "", cargo?.area ?? ""];
+  return campos.some((c) => c.toLowerCase().includes(chave));
+}
+
+/**
+ * Detecta ausências simultâneas que violam as regras de bloqueio.
+ *
+ * Uma regra é violada quando, numa mesma janela, o número de pessoas do
+ * alvo ausentes ao mesmo tempo excede `maximoSimultaneo`. A comparação é
+ * feita par a par: basta uma sobreposição para o conflito existir, e o
+ * intervalo reportado é a interseção — que é o período a renegociar.
+ */
+export function detectarConflitos(
+  ferias: Ferias[],
+  pessoas: Pessoa[],
+  cargos: Cargo[],
+  regras: RegraBloqueio[],
+): ConflitoFerias[] {
+  const pessoaPorId = new Map(pessoas.map((p) => [p.id, p]));
+  const cargoPorId = new Map(cargos.map((c) => [c.id, c]));
+  const conflitos: ConflitoFerias[] = [];
+
+  for (const regra of regras.filter((r) => r.ativa)) {
+    const relevantes = ferias.filter((f) => {
+      if (f.status === "Gozada") return false;
+      const p = pessoaPorId.get(f.pessoaId);
+      if (!p) return false;
+      return casaAlvo(regra.alvo, p, cargoPorId.get(p.cargoId ?? ""));
+    });
+
+    for (let i = 0; i < relevantes.length; i += 1) {
+      for (let j = i + 1; j < relevantes.length; j += 1) {
+        const a = relevantes[i];
+        const b = relevantes[j];
+        if (a.pessoaId === b.pessoaId) continue;
+        const fimA = fimDoPeriodo(a.inicio, a.dias);
+        const fimB = fimDoPeriodo(b.inicio, b.dias);
+        if (!sobrepoe(a.inicio, fimA, b.inicio, fimB)) continue;
+        // Duas ausências simultâneas cabem quando a regra permite 2+.
+        if (regra.maximoSimultaneo >= 2) continue;
+        conflitos.push({
+          regra,
+          feriasIds: [a.id, b.id],
+          pessoas: [
+            pessoaPorId.get(a.pessoaId)?.nome ?? "—",
+            pessoaPorId.get(b.pessoaId)?.nome ?? "—",
+          ],
+          inicio: a.inicio > b.inicio ? a.inicio : b.inicio,
+          fim: fimA < fimB ? fimA : fimB,
+        });
+      }
+    }
+  }
+  return conflitos;
 }
