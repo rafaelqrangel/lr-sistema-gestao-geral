@@ -156,6 +156,12 @@ export interface Aprovacao {
   /** Link para o comprovante, relatório ou anexo. */
   link: string;
   observacao: string;
+  /**
+   * Rotina recorrente: dias entre ocorrências (7 = semanal, ex.: revisão
+   * do Uber Business). Ao decidir, a próxima ocorrência entra sozinha na
+   * fila. 0 ou ausente = não repete.
+   */
+  recorrenciaDias?: number;
 }
 
 // ------------------------------------------------------------ Performance

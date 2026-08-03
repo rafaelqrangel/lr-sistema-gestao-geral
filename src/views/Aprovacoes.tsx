@@ -4,6 +4,7 @@ import type { Aprovacao, StatusAprovacao, TipoAprovacao } from "../types";
 import { Badge, Campo, Modal, Vazio, type TomBadge } from "../components/ui";
 import { diasEntre, fmtDataCurta, fmtPrazo, hojeISO, somarDias } from "../lib/datas";
 import { fmtBRLCentavos, novoId } from "../lib/formato";
+import { interpretarEmail, PROMPT_COPILOT } from "../lib/importarEmail";
 
 const TIPOS: TipoAprovacao[] = [
   "Viagem", "Mobilidade (Uber/táxi)", "Reembolso de despesa", "Orçamento",
@@ -32,7 +33,56 @@ function aprovacaoVazia(): Aprovacao {
     centroCusto: "",
     link: "",
     observacao: "",
+    recorrenciaDias: 0,
   };
+}
+
+/** Modelo pronto da rotina semanal de revisão do Uber Business. */
+function rotinaUber(): Aprovacao {
+  return {
+    ...aprovacaoVazia(),
+    tipo: "Mobilidade (Uber/táxi)",
+    descricao: "Revisão semanal — corridas Uber Business da equipe",
+    prazoResposta: somarDias(hojeISO(), 4),
+    recorrenciaDias: 7,
+    observacao:
+      "Abrir o link, revisar as corridas da semana no Uber e registrar a decisão aqui — a próxima semana entra na fila sozinha.",
+  };
+}
+
+const OPCOES_RECORRENCIA: { valor: number; rotulo: string }[] = [
+  { valor: 0, rotulo: "Não repete" },
+  { valor: 7, rotulo: "Toda semana" },
+  { valor: 14, rotulo: "A cada 2 semanas" },
+  { valor: 30, rotulo: "Todo mês" },
+];
+
+function rotuloRecorrencia(dias: number): string {
+  return (
+    OPCOES_RECORRENCIA.find((o) => o.valor === dias)?.rotulo ??
+    `A cada ${dias} dias`
+  );
+}
+
+/**
+ * Ao decidir uma solicitação recorrente, agenda a próxima ocorrência a
+ * partir do dia da decisão (evita fila retroativa se uma semana atrasar).
+ */
+function comProximaOcorrencia(lista: Aprovacao[], decidida: Aprovacao): Aprovacao[] {
+  const rec = decidida.recorrenciaDias ?? 0;
+  if (rec <= 0) return lista;
+  const hoje = hojeISO();
+  return [
+    ...lista,
+    {
+      ...decidida,
+      id: novoId("a"),
+      status: "Pendente",
+      dataDecisao: null,
+      dataSolicitacao: hoje,
+      prazoResposta: somarDias(hoje, rec),
+    },
+  ];
 }
 
 export function Aprovacoes({ dados }: { dados: Dados }) {
@@ -41,6 +91,10 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
   const [ehNovo, setEhNovo] = useState(false);
   const [aba, setAba] = useState<"fila" | "historico">("fila");
   const [filtroTipo, setFiltroTipo] = useState("");
+  const [importAberto, setImportAberto] = useState(false);
+  const [textoEmail, setTextoEmail] = useState("");
+  const [notaImport, setNotaImport] = useState<string[] | null>(null);
+  const [promptCopiado, setPromptCopiado] = useState(false);
 
   const hoje = hojeISO();
   const nomeDe = (id: string | null) =>
@@ -61,12 +115,13 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
   }, [banco.aprovacoes, filtroTipo]);
 
   const decidir = (id: string, status: "Aprovado" | "Reprovado") =>
-    atualizar((b) => ({
-      ...b,
-      aprovacoes: b.aprovacoes.map((a) =>
-        a.id === id ? { ...a, status, dataDecisao: hojeISO() } : a,
-      ),
-    }));
+    atualizar((b) => {
+      const alvo = b.aprovacoes.find((a) => a.id === id);
+      if (!alvo) return b;
+      const decidida = { ...alvo, status, dataDecisao: hojeISO() };
+      const lista = b.aprovacoes.map((a) => (a.id === id ? decidida : a));
+      return { ...b, aprovacoes: comProximaOcorrencia(lista, decidida) };
+    });
 
   const salvar = () => {
     if (!editando || !editando.descricao.trim()) return;
@@ -75,13 +130,50 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
       ...editando,
       dataDecisao: decidida ? (editando.dataDecisao ?? hojeISO()) : null,
     };
-    atualizar((b) => ({
-      ...b,
-      aprovacoes: ehNovo
+    atualizar((b) => {
+      const anterior = b.aprovacoes.find((a) => a.id === pronta.id);
+      const jaEstavaDecidida =
+        anterior?.status === "Aprovado" || anterior?.status === "Reprovado";
+      const lista = ehNovo
         ? [...b.aprovacoes, pronta]
-        : b.aprovacoes.map((a) => (a.id === pronta.id ? pronta : a)),
-    }));
+        : b.aprovacoes.map((a) => (a.id === pronta.id ? pronta : a));
+      // Só agenda a próxima ocorrência na transição para decidida — editar
+      // um item do histórico não pode duplicar a rotina.
+      return {
+        ...b,
+        aprovacoes:
+          decidida && !jaEstavaDecidida
+            ? comProximaOcorrencia(lista, pronta)
+            : lista,
+      };
+    });
     setEditando(null);
+    setNotaImport(null);
+  };
+
+  const importar = () => {
+    const resultado = interpretarEmail(textoEmail, banco.pessoas);
+    setImportAberto(false);
+    setTextoEmail("");
+    setNotaImport(resultado.detectados);
+    setEhNovo(true);
+    setEditando(resultado.aprovacao);
+  };
+
+  const copiarPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(PROMPT_COPILOT);
+    } catch {
+      // file:// sem permissão de clipboard — fallback via seleção.
+      const area = document.createElement("textarea");
+      area.value = PROMPT_COPILOT;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+    }
+    setPromptCopiado(true);
+    window.setTimeout(() => setPromptCopiado(false), 2000);
   };
 
   const excluir = () => {
@@ -104,9 +196,24 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
         <h1>Aprovações</h1>
         <div className="espaco" />
         <button
+          className="botao"
+          title="Criar a revisão semanal das corridas do Uber Business"
+          onClick={() => {
+            setEhNovo(true);
+            setNotaImport(null);
+            setEditando(rotinaUber());
+          }}
+        >
+          ↻ Rotina Uber
+        </button>
+        <button className="botao" onClick={() => setImportAberto(true)}>
+          📥 Importar de e-mail
+        </button>
+        <button
           className="botao primario"
           onClick={() => {
             setEhNovo(true);
+            setNotaImport(null);
             setEditando(aprovacaoVazia());
           }}
         >
@@ -168,14 +275,38 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
                     className="clicavel"
                     onClick={() => {
                       setEhNovo(false);
+                      setNotaImport(null);
                       setEditando({ ...a });
                     }}
                   >
                     <td style={{ maxWidth: 280 }}>
-                      <div className="principal">{a.tipo}</div>
+                      <div className="principal">
+                        {a.tipo}
+                        {(a.recorrenciaDias ?? 0) > 0 && (
+                          <>
+                            {" "}
+                            <Badge tom="neutro">
+                              ↻ {rotuloRecorrencia(a.recorrenciaDias!).toLowerCase()}
+                            </Badge>
+                          </>
+                        )}
+                      </div>
                       <div className="secundario">
                         {a.descricao}
                         {a.centroCusto ? ` · CC: ${a.centroCusto}` : ""}
+                        {a.link && (
+                          <>
+                            {" · "}
+                            <a
+                              href={a.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              abrir link ↗
+                            </a>
+                          </>
+                        )}
                       </div>
                     </td>
                     <td>{nomeDe(a.solicitanteId)}</td>
@@ -220,12 +351,72 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
       </div>
 
       <Modal
+        titulo="Importar aprovação de e-mail"
+        aberto={importAberto}
+        aoFechar={() => setImportAberto(false)}
+      >
+        <p className="sub" style={{ marginTop: 0 }}>
+          Cole abaixo o texto do e-mail (Ctrl+A e Ctrl+C na mensagem do
+          Outlook) <strong>ou</strong> a resposta do Copilot. O painel
+          interpreta e pré-preenche o formulário para você revisar.
+        </p>
+        <details style={{ marginBottom: 12 }}>
+          <summary style={{ cursor: "pointer" }}>
+            Usar o Copilot do Outlook (extração mais precisa)
+          </summary>
+          <p className="sub">
+            Abra o e-mail, acione o Copilot e cole o prompt abaixo. Depois
+            cole a resposta dele aqui no campo de texto.
+          </p>
+          <textarea
+            readOnly
+            value={PROMPT_COPILOT}
+            rows={7}
+            style={{ width: "100%", fontSize: 12 }}
+          />
+          <button className="botao mini" onClick={copiarPrompt}>
+            {promptCopiado ? "Copiado ✓" : "Copiar prompt"}
+          </button>
+        </details>
+        <textarea
+          value={textoEmail}
+          onChange={(e) => setTextoEmail(e.target.value)}
+          rows={10}
+          autoFocus
+          placeholder="Cole aqui o e-mail ou a resposta do Copilot…"
+          style={{ width: "100%" }}
+        />
+        <div className="modal-acoes">
+          <button className="botao" onClick={() => setImportAberto(false)}>
+            Cancelar
+          </button>
+          <button
+            className="botao primario"
+            onClick={importar}
+            disabled={!textoEmail.trim()}
+          >
+            Interpretar e revisar
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
         titulo={ehNovo ? "Nova solicitação" : "Editar solicitação"}
         aberto={editando !== null}
-        aoFechar={() => setEditando(null)}
+        aoFechar={() => {
+          setEditando(null);
+          setNotaImport(null);
+        }}
       >
         {editando && (
           <>
+            {notaImport && (
+              <p className="sub" style={{ marginTop: 0 }}>
+                {notaImport.length > 0
+                  ? `Extraído do e-mail: ${notaImport.join(" · ")}. Confira antes de salvar.`
+                  : "Não consegui extrair nada do texto colado — preencha manualmente."}
+              </p>
+            )}
             <div className="form-grade">
               <Campo label="Tipo">
                 <select
@@ -299,11 +490,23 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
                   ))}
                 </select>
               </Campo>
-              <Campo label="Link (comprovante, relatório)">
+              <Campo label="Repetir">
+                <select
+                  value={editando.recorrenciaDias ?? 0}
+                  onChange={(e) => editar("recorrenciaDias", Number(e.target.value))}
+                >
+                  {OPCOES_RECORRENCIA.map((o) => (
+                    <option key={o.valor} value={o.valor}>
+                      {o.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              <Campo label="Link (comprovante, relatório, painel Uber)">
                 <input
                   value={editando.link}
                   onChange={(e) => editar("link", e.target.value)}
-                  placeholder="https://…"
+                  placeholder="https:// — ex.: link do dashboard Uber Business"
                 />
               </Campo>
               <Campo label="Observação" largo>
@@ -320,7 +523,13 @@ export function Aprovacoes({ dados }: { dados: Dados }) {
                   Excluir
                 </button>
               )}
-              <button className="botao" onClick={() => setEditando(null)}>
+              <button
+                className="botao"
+                onClick={() => {
+                  setEditando(null);
+                  setNotaImport(null);
+                }}
+              >
                 Cancelar
               </button>
               <button

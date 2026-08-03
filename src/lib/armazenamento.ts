@@ -112,10 +112,11 @@ export function exportarCSVs(banco: Banco): void {
   baixarArquivo(
     `aprovacoes-${data}.csv`,
     paraCSV([
-      ["id", "tipo", "solicitante", "descricao", "valor", "data_solicitacao", "prazo_resposta", "status", "data_decisao", "centro_custo"],
+      ["id", "tipo", "solicitante", "descricao", "valor", "data_solicitacao", "prazo_resposta", "status", "data_decisao", "centro_custo", "recorrencia_dias", "link"],
       ...banco.aprovacoes.map((a) => [
         a.id, a.tipo, nomeDe(a.solicitanteId), a.descricao, a.valor,
         a.dataSolicitacao, a.prazoResposta, a.status, a.dataDecisao, a.centroCusto,
+        a.recorrenciaDias ?? 0, a.link,
       ]),
     ]),
     "text/csv",

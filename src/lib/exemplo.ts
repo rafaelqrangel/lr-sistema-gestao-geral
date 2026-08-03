@@ -297,6 +297,22 @@ export function bancoExemplo(): Banco {
         link: "",
         observacao: "",
       },
+      {
+        id: "a6",
+        tipo: "Mobilidade (Uber/táxi)",
+        solicitanteId: null,
+        descricao: "Revisão semanal — corridas Uber Business da equipe",
+        valor: 0,
+        dataSolicitacao: somarDias(hoje, -2),
+        prazoResposta: somarDias(hoje, 2),
+        status: "Pendente",
+        dataDecisao: null,
+        centroCusto: "Comercial",
+        link: "https://business.uber.com/",
+        observacao:
+          "Abrir o link, revisar as corridas da semana no Uber e registrar a decisão aqui — a próxima semana entra na fila sozinha.",
+        recorrenciaDias: 7,
+      },
     ],
     avaliacoes: [
       {

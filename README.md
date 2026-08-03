@@ -12,7 +12,10 @@ Ferramenta única, simples e sem servidor para o gestor acompanhar:
   backup e alta criticidade sem documentação (POP).
 - **Aprovações** — a fila do gestor: viagens, Uber/mobilidade, reembolsos,
   orçamentos, compras e contratos, com prazo de resposta, aprovação/reprovação em
-  um clique e histórico.
+  um clique e histórico. Pedidos que chegam por e-mail entram por
+  **Importar de e-mail** (cole o texto da mensagem ou a extração do Copilot);
+  rotinas fixas, como a revisão semanal do Uber Business, entram como
+  **solicitação recorrente** — ao decidir, a próxima ocorrência agenda sozinha.
 - **Performance** — avaliações por ciclo (5 competências + resultado, escala
   1–5), potencial e o 9-box (resultado × potencial) para decisões de promoção,
   desenvolvimento e sucessão.
@@ -34,6 +37,22 @@ Os dados ficam salvos no navegador (localStorage). Na aba **Dados & Power BI**:
   (Obter dados → Texto/CSV).
 
 Na primeira abertura é possível carregar **dados de exemplo** para explorar.
+
+### Alimentando as aprovações a partir do e-mail
+
+Em **Aprovações → Importar de e-mail** há duas formas:
+
+1. **Colar o e-mail** — Ctrl+A / Ctrl+C na mensagem do Outlook e colar no
+   campo. O painel extrai assunto, solicitante (se estiver no cadastro de
+   pessoas), data de envio, período da viagem e valores por heurística.
+2. **Via Copilot do Outlook** (mais preciso) — o modal traz um prompt pronto
+   com botão *Copiar*: cole no Copilot com o e-mail aberto e traga a resposta
+   estruturada de volta para o campo de importação.
+
+Nos dois casos nada é salvo direto: o formulário abre pré-preenchido para
+revisão. Para a **revisão semanal do Uber Business**, o botão *↻ Rotina Uber*
+cria uma solicitação recorrente com o link do dashboard — guarde apenas o
+link no painel, nunca credenciais.
 
 ## Desenvolvimento
 
@@ -57,6 +76,7 @@ src/
     ferias.ts           # regras CLT: períodos aquisitivos, art. 137, fracionamento
     formato.ts          # moeda, números e ids
     armazenamento.ts    # localStorage + export JSON/CSV + import
+    importarEmail.ts    # parser de e-mails/Copilot → aprovação pré-preenchida
     exemplo.ts          # dados de demonstração (datas relativas ao dia)
   views/                # uma tela por eixo + dados
   components/ui.tsx     # Badge, Modal, Campo, Barras
