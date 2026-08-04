@@ -446,3 +446,76 @@ textarea {
   resize: vertical;
   width: 100%;
 }
+
+/* -------------------------------------------- Estado da sincronização */
+
+.selo-sync {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  border: 1px solid var(--baseline);
+  background: var(--surface-1);
+  color: var(--ink-2);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+  text-align: left;
+}
+.selo-sync:hover { background: var(--wash); }
+.ponto-sync {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ink-mute);
+}
+.selo-sync.bom .ponto-sync { background: var(--st-good); }
+.selo-sync.atencao .ponto-sync { background: var(--st-warn); }
+.selo-sync.critico .ponto-sync { background: var(--st-critical); }
+.selo-sync.critico { border-color: var(--st-critical); color: var(--st-critical); }
+
+.faixa-conflito {
+  border: 1px solid var(--st-critical);
+  border-left-width: 4px;
+  background: color-mix(in srgb, var(--st-critical) 8%, var(--surface-1));
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------- Responsivo */
+
+@media (max-width: 860px) {
+  /* Layout é flex-row no desktop; no celular a barra vira topo empilhado. */
+  #root { flex-direction: column; }
+  .nav {
+    position: static;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 10px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--grid);
+  }
+  .nav-titulo { width: 100%; margin-bottom: 4px; }
+  .nav button { width: auto; flex: 1 1 auto; justify-content: center; }
+  .nav-rodape { width: 100%; margin-top: 6px; }
+  .conteudo { padding: 14px 12px 40px; max-width: none; }
+  .grade.duas, .grade.kpis { grid-template-columns: 1fr; }
+  .form-grade { grid-template-columns: 1fr; }
+  .campo.largo { grid-column: auto; }
+  .modal { width: 100%; max-width: none; border-radius: 12px; }
+  .cal-dia { min-height: 68px; }
+  .cal-item { font-size: 9.5px; }
+  /* Em telas estreitas, a área segura do iPhone precisa de folga embaixo. */
+  body { padding-bottom: env(safe-area-inset-bottom); }
+}

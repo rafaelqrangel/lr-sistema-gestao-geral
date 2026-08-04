@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Banco } from "./types";
 import { carregarBanco, salvarBanco } from "./lib/armazenamento";
+import { usarSincronizacao } from "./lib/usarSincronizacao";
+import { rotuloEstado, tomEstado } from "./lib/sincronizacao";
 import { bancoExemplo } from "./lib/exemplo";
 import { hojeISO } from "./lib/datas";
 import { lembretesPendentes } from "./lib/agenda";
@@ -19,6 +21,7 @@ import { DadosView } from "./views/Dados";
 export interface Dados {
   banco: Banco;
   atualizar: (fn: (b: Banco) => Banco) => void;
+  sync: ReturnType<typeof usarSincronizacao>;
 }
 
 type Tela =
@@ -52,9 +55,12 @@ export default function App() {
     salvarBanco(banco);
   }, [banco]);
 
+  const aplicar = useCallback((b: Banco) => setBanco(b), []);
+  const sync = usarSincronizacao(banco, aplicar);
+
   const dados: Dados = useMemo(
-    () => ({ banco, atualizar: (fn) => setBanco((b) => fn(b)) }),
-    [banco],
+    () => ({ banco, atualizar: (fn) => setBanco((b) => fn(b)), sync }),
+    [banco, sync],
   );
 
   const pendencias = useMemo(() => {
@@ -110,15 +116,46 @@ export default function App() {
           </button>
         ))}
         <div className="nav-rodape">
-          {banco.git.ultimaSync
-            ? `Sincronizado em ${new Date(banco.git.ultimaSync).toLocaleDateString("pt-BR")}.`
-            : "Dados salvos neste navegador."}
-          <br />
-          Backup e GitHub em “Dados &amp; GitHub”.
+          <button
+            className={`selo-sync ${tomEstado(sync.estado)}`}
+            onClick={() => setTela("dados")}
+            title="Abrir Dados & GitHub"
+          >
+            <span className="ponto-sync" />
+            {rotuloEstado(sync.estado)}
+          </button>
+          {sync.estado.tipo === "desligado" && (
+            <>
+              Ligue a sincronização para acessar de qualquer aparelho.
+            </>
+          )}
         </div>
       </nav>
 
       <main className="conteudo">
+        {sync.estado.tipo === "conflito" && (
+          <div className="faixa-conflito">
+            <strong>⚠ Não salvei para não apagar nada.</strong> {sync.estado.mensagem}
+            <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+              <button className="botao" onClick={() => void sync.baixarAgora()}>
+                Trazer a versão do GitHub (descarta o que está aqui)
+              </button>
+              <button className="botao perigo" onClick={() => void sync.descartarConflito()}>
+                Manter o que está aqui (substitui o do GitHub)
+              </button>
+            </div>
+          </div>
+        )}
+        {sync.estado.tipo === "erro" && (
+          <div className="faixa-conflito">
+            <strong>Não consegui salvar no GitHub.</strong> {sync.estado.mensagem}
+            <div style={{ marginTop: 8 }}>
+              <button className="botao" onClick={() => void sync.enviarAgora()}>
+                Tentar de novo
+              </button>
+            </div>
+          </div>
+        )}
         {vazio && tela !== "dados" ? (
           <BoasVindas
             carregarExemplo={() => setBanco(bancoExemplo())}

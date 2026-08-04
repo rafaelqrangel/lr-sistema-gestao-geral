@@ -42,18 +42,43 @@ Ferramenta única, simples e sem servidor para o gestor acompanhar:
 
 ## Como usar
 
-O produto final é **um único arquivo HTML** (`dist/index.html`): abra no
-navegador com duplo clique, guarde no OneDrive/SharePoint ou fixe como guia no
-Teams. Não precisa de servidor, login nem instalação.
+O painel é publicado como site no **GitHub Pages** e funciona como
+aplicativo instalável (PWA) sem passar por loja nem por instalação:
 
-Os dados ficam salvos no navegador (localStorage). Na aba **Dados & GitHub**:
+- **iPhone / iPad:** Compartilhar → *Adicionar à Tela de Início*
+- **Mac (Safari):** Compartilhar → *Adicionar ao Dock*
+- **Windows (Chrome/Edge):** ícone de instalar na barra de endereço
 
-- **Sincronização com o GitHub** — o repositório passa a guardar `banco.json` e
-  o histórico de atas (`gestao/atas/<processo>/<data>-<processo>.md`). Assim o
-  painel abre de qualquer máquina, cada ata fica versionada e o backup é
-  automático. Requer um *fine-grained PAT* com `Contents: Read and write`
-  restrito a um repositório — o token fica só no navegador e nunca entra no
-  backup JSON nem nos CSVs. Use repositório **privado**.
+Funciona offline para consultar e editar; o que muda sobe quando a conexão
+volta. O build continua sendo **um único arquivo HTML** (`dist/index.html`),
+então também abre com duplo clique se preferir.
+
+### Sincronização entre aparelhos
+
+Com a sincronização ligada, os dados deixam de morar num aparelho só: o
+repositório guarda `gestao/banco.json` e o histórico de atas em
+`gestao/atas/<processo>/<data>-<processo>.md`. Celular, notebook pessoal e
+notebook do trabalho enxergam a mesma coisa, cada gravação vira uma versão
+recuperável e o backup é automático.
+
+**Trava contra perda de dado.** Toda gravação declara qual versão o aparelho
+conhecia (`shaBanco`). Se o servidor tiver outra — porque outro aparelho
+gravou no meio do caminho — a escrita é **recusada** com aviso e duas saídas
+explícitas (trazer a versão remota, ou substituí-la), em vez de sobrescrever
+em silêncio. As atas são gravadas antes do índice: mesmo num envio recusado,
+nenhum texto de reunião se perde.
+
+Salvamento é automático: busca a versão remota ao abrir e grava alguns
+segundos depois de cada edição. O estado aparece o tempo todo na barra
+lateral.
+
+Requer um *fine-grained PAT* com `Contents: Read and write` restrito a um
+repositório — fica só no navegador e nunca entra no backup JSON nem nos CSVs.
+Use repositório **privado**: o painel detecta e alerta se o repositório de
+dados for público.
+
+Os dados também ficam salvos no navegador (localStorage), então o painel abre
+e edita offline. Na aba **Dados & GitHub**:
 
 - **Backup completo (JSON)** — exporte e guarde no OneDrive; restaure em
   qualquer máquina.
@@ -65,13 +90,6 @@ Na primeira abertura é possível carregar a **arquitetura LR Nordeste** — 12
 cargos, 13 pessoas, 22 KPIs, trilha de carreira e regras de cobertura já
 estruturados, com salários, faixas, datas de admissão e metas em branco para
 preenchimento.
-
-### Usar como aplicativo no Mac, sem instalar nada
-
-Com a sincronização ligada, publique o `dist/index.html` numa URL (GitHub Pages
-ou OneDrive) e use **Safari → Compartilhar → Adicionar ao Dock**. Vira ícone de
-aplicativo com janela própria, sem instalação e sem depender do administrador da
-rede. Os dados vêm do GitHub, então a mesma conta abre em qualquer máquina.
 
 ### Alimentando as aprovações a partir do e-mail
 
@@ -111,7 +129,9 @@ src/
     ferias.ts           # regras CLT: art. 137, fracionamento, conflitos de cobertura
     agenda.ts           # recorrência de processos, lembretes e itens do calendário
     atas.ts             # ata → Markdown, nome de arquivo e texto para e-mail
-    github.ts           # API de conteúdo do GitHub (ler/gravar banco e atas)
+    github.ts           # API de conteúdo do GitHub, com recusa de escrita desatualizada
+    sincronizacao.ts    # envio/baixa do banco e das atas, estados e conflitos
+    usarSincronizacao.ts # hook de salvamento automático (abre → baixa, edita → salva)
     migracao.ts         # bancos da v1 (cargo dentro da pessoa) → v2 (cargo separado)
     formato.ts          # moeda, números e ids
     armazenamento.ts    # localStorage + export JSON/CSV + import
@@ -119,6 +139,12 @@ src/
     exemplo.ts          # carga inicial: arquitetura de cargos LR Nordeste
   views/                # uma tela por eixo + calendário e dados
   components/ui.tsx     # Badge, Modal, Campo, Abas, ListaTexto, Barras
+public/
+  manifest.webmanifest  # identidade do app instalável
+  sw.js                 # service worker: abre offline, nunca cacheia a API
+  icone*.png|svg        # ícones de tela de início / Dock
+.github/workflows/
+  pages.yml             # build + publicação no GitHub Pages a cada push
 ```
 
 ## Avisos
@@ -132,9 +158,9 @@ src/
 - Nomes, cargos e vínculos da carga inicial precisam de conferência junto ao
   RH/folha antes de virar documento oficial — especialmente o vínculo dos RCAs,
   que não entram em faixa salarial CLT.
-- Salários e avaliações são dados sensíveis. Sem sincronização, nada sai do
-  navegador; com ela ligada, use repositório privado. Trate os exports com o
-  mesmo cuidado de uma planilha de RH.
+- Salários e avaliações são dados sensíveis. **O repositório de dados precisa
+  ser privado** — o do código pode ser público (é o que hospeda o site). O
+  painel alerta se detectar que está gravando em repositório público.
 - Quando o time todo precisar editar ao mesmo tempo, o caminho no Microsoft 365
   Business Standard é migrar as tabelas para Listas do SharePoint (o Power BI lê
   direto). A sincronização com o GitHub resolve acesso de várias máquinas por um

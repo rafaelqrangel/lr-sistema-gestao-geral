@@ -476,6 +476,16 @@ export interface ConfigGit {
   pasta: string;
   /** ISO datetime da última sincronização bem-sucedida. */
   ultimaSync: string | null;
+  /**
+   * Identificador da versão do banco que este aparelho baixou por último.
+   * É a trava contra perda de dado: se o servidor tiver outro, alguém
+   * gravou de outro lugar e o envio é bloqueado em vez de sobrescrever.
+   */
+  shaBanco: string | null;
+  /** Sincroniza sozinho ao abrir e alguns segundos depois de cada edição. */
+  autoSync: boolean;
+  /** Visibilidade detectada no último teste de conexão. */
+  repoPrivado: boolean | null;
 }
 
 export const CONFIG_GIT_PADRAO: ConfigGit = {
@@ -484,6 +494,9 @@ export const CONFIG_GIT_PADRAO: ConfigGit = {
   branch: "main",
   pasta: "gestao",
   ultimaSync: null,
+  shaBanco: null,
+  autoSync: true,
+  repoPrivado: null,
 };
 
 // ------------------------------------------------------------------ Banco

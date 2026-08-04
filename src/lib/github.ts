@@ -3,7 +3,12 @@
  *
  * O repositório funciona como servidor: o banco vira `banco.json` e cada
  * ata vira um `.md` versionado sob a pasta do seu processo. Isso dá
- * histórico, acesso de qualquer máquina e backup — sem instalar nada.
+ * histórico, acesso de qualquer aparelho e backup — sem instalar nada.
+ *
+ * TRAVA CONTRA PERDA DE DADO: toda gravação informa qual versão o aparelho
+ * conhecia. Se o servidor tiver outra — porque outro aparelho gravou no
+ * meio do caminho — a escrita é recusada com `ErroConflito` em vez de
+ * sobrescrever silenciosamente o trabalho alheio.
  *
  * O token é um PAT de escopo fino, restrito a um repositório, com
  * permissão de leitura e escrita apenas em "Contents". Fica no
@@ -43,6 +48,20 @@ export class ErroGit extends Error {
   }
 }
 
+/**
+ * O arquivo mudou no servidor desde a última leitura deste aparelho.
+ * Nada foi gravado — o usuário precisa baixar antes de reenviar.
+ */
+export class ErroConflito extends ErroGit {
+  constructor(
+    message: string,
+    readonly shaRemoto: string,
+  ) {
+    super(message, 409);
+    this.name = "ErroConflito";
+  }
+}
+
 function cabecalhos(token: string): HeadersInit {
   return {
     Authorization: `Bearer ${token}`,
@@ -58,10 +77,10 @@ function mensagemDeErro(status: number, corpo: string): string {
     return "Token sem permissão de escrita em Contents, ou limite de uso atingido.";
   }
   if (status === 404) {
-    return "Repositório, branch ou caminho não encontrado — confira owner, repo e branch.";
+    return "Repositório, branch ou caminho não encontrado — confira usuário, repositório e branch.";
   }
   if (status === 409) {
-    return "Conflito: o arquivo mudou no GitHub desde a última leitura. Sincronize de novo.";
+    return "O arquivo mudou no GitHub desde a última leitura. Baixe antes de enviar.";
   }
   if (status === 422) return "Requisição recusada pelo GitHub (branch inexistente?).";
   return `Falha na comunicação com o GitHub (HTTP ${status}). ${corpo.slice(0, 140)}`;
@@ -76,7 +95,7 @@ async function requisitar(
   try {
     resposta = await fetch(url, { ...init, headers: cabecalhos(token) });
   } catch {
-    throw new ErroGit("Sem conexão com o GitHub. Verifique a rede.");
+    throw new ErroGit("Sem conexão com o GitHub. Verifique a internet.");
   }
   if (resposta.status === 404) throw new ErroGit(mensagemDeErro(404, ""), 404);
   if (!resposta.ok) {
@@ -112,8 +131,13 @@ interface RespostaConteudo {
   html_url?: string;
 }
 
+export interface InfoRepo {
+  nome: string;
+  privado: boolean;
+}
+
 /** Confere credencial e acesso ao repositório antes de gravar qualquer coisa. */
-export async function testarAcesso(alvo: AlvoGit): Promise<string> {
+export async function testarAcesso(alvo: AlvoGit): Promise<InfoRepo> {
   const dados = (await requisitar(
     `${API}/repos/${alvo.owner}/${alvo.repo}`,
     alvo.token,
@@ -123,14 +147,22 @@ export async function testarAcesso(alvo: AlvoGit): Promise<string> {
       "O token enxerga o repositório mas não tem permissão de escrita (Contents: Read and write).",
     );
   }
-  return `${dados.full_name ?? `${alvo.owner}/${alvo.repo}`}${dados.private ? " (privado)" : " (público)"}`;
+  return {
+    nome: dados.full_name ?? `${alvo.owner}/${alvo.repo}`,
+    privado: Boolean(dados.private),
+  };
+}
+
+export interface ArquivoGit {
+  conteudo: string;
+  sha: string;
 }
 
 /** Lê um arquivo. Retorna null quando ele ainda não existe. */
 export async function lerArquivo(
   alvo: AlvoGit,
   caminho: string,
-): Promise<{ conteudo: string; sha: string } | null> {
+): Promise<ArquivoGit | null> {
   const url = `${API}/repos/${alvo.owner}/${alvo.repo}/contents/${encodeURI(caminho)}?ref=${encodeURIComponent(alvo.branch)}`;
   try {
     const dados = (await requisitar(url, alvo.token)) as RespostaConteudo;
@@ -142,31 +174,57 @@ export async function lerArquivo(
   }
 }
 
+/** Só o identificador da versão atual — usado para checar conflito barato. */
+export async function lerSha(alvo: AlvoGit, caminho: string): Promise<string | null> {
+  return (await lerArquivo(alvo, caminho))?.sha ?? null;
+}
+
 /**
- * Grava (cria ou atualiza) um arquivo. O `sha` do arquivo existente é
- * obrigatório na atualização — sem ele o GitHub recusa, o que evita
- * sobrescrever cegamente uma versão mais nova.
+ * Grava um arquivo protegendo contra sobrescrita.
+ *
+ * `shaConhecido` é a versão que este aparelho tinha ao carregar os dados:
+ *  - `undefined` → gravação sem checagem (usada para as atas, que são
+ *    arquivos append-only por data e não disputam edição);
+ *  - `null` → o aparelho acredita que o arquivo ainda não existe;
+ *  - string → o aparelho espera exatamente aquela versão lá.
+ *
+ * Divergência levanta `ErroConflito` e nada é escrito.
  */
 export async function gravarArquivo(
   alvo: AlvoGit,
   caminho: string,
   conteudo: string,
   mensagem: string,
-): Promise<string> {
-  const existente = await lerArquivo(alvo, caminho);
+  shaConhecido?: string | null,
+): Promise<{ url: string; sha: string }> {
+  const atual = await lerSha(alvo, caminho);
+
+  if (shaConhecido !== undefined && atual !== shaConhecido) {
+    throw new ErroConflito(
+      atual === null
+        ? "O arquivo sumiu do GitHub desde a última sincronização deste aparelho."
+        : "Existe uma versão mais nova no GitHub (outro aparelho gravou). Baixe antes de enviar — nada foi sobrescrito.",
+      atual ?? "",
+    );
+  }
+
   const url = `${API}/repos/${alvo.owner}/${alvo.repo}/contents/${encodeURI(caminho)}`;
   const corpo: Record<string, unknown> = {
     message: mensagem,
     content: paraBase64(conteudo),
     branch: alvo.branch,
   };
-  if (existente) corpo.sha = existente.sha;
+  if (atual) corpo.sha = atual;
 
   const dados = (await requisitar(url, alvo.token, {
     method: "PUT",
     body: JSON.stringify(corpo),
   })) as { content?: RespostaConteudo };
-  return dados.content?.html_url ?? "";
+
+  return {
+    url: dados.content?.html_url ?? "",
+    sha: dados.content?.sha ?? "",
+  };
 }
 
 /** URL da pasta no GitHub, para abrir o histórico no navegador. */
@@ -177,4 +235,14 @@ export function urlDaPasta(
   caminho: string,
 ): string {
   return `https://github.com/${owner}/${repo}/tree/${branch}/${caminho}`;
+}
+
+/** URL do histórico de versões de um arquivo — todo backup já feito. */
+export function urlDoHistorico(
+  owner: string,
+  repo: string,
+  branch: string,
+  caminho: string,
+): string {
+  return `https://github.com/${owner}/${repo}/commits/${branch}/${caminho}`;
 }
