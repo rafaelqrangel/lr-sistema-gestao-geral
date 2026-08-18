@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Briefing HPPC · Leite de Rosas</title>
+<style>
+:root{
+  --rosa:#EC008C;
+  --rosa-escuro:#A6005F;
+  --rosa-claro:#FCE4F1;
+  --rosa-borda:#F7B8DA;
+  --tinta:#1A1A1A;
+  --tinta-fraca:#6B6B6B;
+  --linha:#E3E3E3;
+  --fundo:#F7F7F8;
+  --branco:#FFFFFF;
+  --ok:#1B8A5A;
+  --alerta:#B26A00;
+  --erro:#C62828;
+  --raio:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--tinta);
+  background:var(--fundo);
+  font-size:15px;
+  line-height:1.5;
+  padding-bottom:120px;
+}
+/* ---------------------------------------------------------- cabecalho */
+header{
+  background:var(--branco);
+  border-bottom:4px solid var(--rosa);
+  position:sticky; top:0; z-index:50;
+}
+.cab{
+  max-width:1100px; margin:0 auto; padding:14px 20px;
+  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+}
+.marca{display:flex;align-items:center;gap:14px;cursor:pointer}
+.marca img{height:52px;width:auto;display:block}
+.wordmark{
+  font-family:Georgia,'Times New Roman',serif;
+  color:var(--rosa); font-weight:700; font-size:26px; line-height:0.95;
+  letter-spacing:-0.5px;
+}
+.wordmark small{display:block;font-size:13px;font-weight:400}
+.cab-txt h1{font-size:17px;margin:0;letter-spacing:0.3px}
+.cab-txt p{margin:2px 0 0;font-size:12.5px;color:var(--tinta-fraca)}
+.cab-dir{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* ------------------------------------------------------------- layout */
+main{max-width:1100px;margin:0 auto;padding:22px 20px}
+.aviso{
+  background:var(--rosa-claro); border:1px solid var(--rosa-borda);
+  border-radius:var(--raio); padding:14px 16px; margin-bottom:22px; font-size:13.5px;
+}
+.aviso b{color:var(--rosa-escuro)}
+section{
+  background:var(--branco); border:1px solid var(--linha);
+  border-radius:var(--raio); margin-bottom:18px; overflow:hidden;
+}
+section>h2{
+  margin:0; padding:12px 18px; font-size:14px; letter-spacing:0.4px;
+  background:var(--rosa); color:#fff; text-transform:uppercase;
+}
+section>h2 span{opacity:.75;font-weight:400;text-transform:none;letter-spacing:0}
+.corpo{padding:16px 18px}
+.campo{margin-bottom:16px}
+.campo:last-child{margin-bottom:0}
+label{display:block;font-weight:bold;font-size:13.5px;margin-bottom:4px}
+.hint{font-size:12px;color:var(--tinta-fraca);margin:0 0 6px}
+input,textarea,select{
+  width:100%; font-family:inherit; font-size:14px; color:var(--tinta);
+  padding:9px 11px; border:1px solid #CFCFCF; border-radius:7px; background:#FFFDF2;
+}
+input:focus,textarea:focus,select:focus{
+  outline:none;border-color:var(--rosa);box-shadow:0 0 0 3px rgba(236,0,140,.12);
+}
+textarea{min-height:70px;resize:vertical}
+.grade2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grade3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:820px){.grade2,.grade3{grid-template-columns:1fr}}
+/* -------------------------------------------------------------- tabelas */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  background:var(--rosa); color:#fff; font-size:11.5px; text-transform:uppercase;
+  letter-spacing:.3px; padding:8px 6px; text-align:left; font-weight:bold;
+}
+td{border-bottom:1px solid var(--linha);padding:4px 6px;vertical-align:middle}
+td input,td select{padding:6px 8px;font-size:13px}
+tfoot td{background:var(--rosa-claro);font-weight:bold;border-bottom:none}
+.num{text-align:right}
+.tab-wrap{overflow-x:auto}
+/* ---------------------------------------------------------------- botoes */
+button{
+  font-family:inherit; font-size:13.5px; font-weight:bold; cursor:pointer;
+  border-radius:7px; padding:9px 16px; border:1px solid var(--rosa);
+  background:var(--rosa); color:#fff;
+}
+button.sec{background:#fff;color:var(--rosa-escuro)}
+button.mini{padding:5px 10px;font-size:12px;font-weight:normal}
+button:hover{filter:brightness(1.06)}
+/* ------------------------------------------------------------- rodape fixo */
+.barra{
+  position:fixed;left:0;right:0;bottom:0;background:#fff;
+  border-top:3px solid var(--rosa); z-index:60; box-shadow:0 -3px 12px rgba(0,0,0,.07);
+}
+.barra-in{
+  max-width:1100px;margin:0 auto;padding:10px 20px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.kpis{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px}
+.kpi b{display:block;font-size:10.5px;color:var(--tinta-fraca);text-transform:uppercase;letter-spacing:.4px;font-weight:bold}
+.kpi span{font-size:16px;font-weight:bold;color:var(--rosa-escuro)}
+.acoes{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.selo{padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:bold}
+.selo.ok{background:#E6F4EC;color:var(--ok)}
+.selo.at{background:#FCF1DE;color:var(--alerta)}
+.selo.er{background:#FBE9E9;color:var(--erro)}
+footer{max-width:1100px;margin:0 auto;padding:8px 20px 30px;font-size:12px;color:var(--tinta-fraca)}
+@media print{
+  header{position:static}.barra{display:none}body{background:#fff;padding-bottom:0}
+  section{break-inside:avoid;border-color:#999}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="cab">
+    <div class="marca" id="marca" title="Clique para carregar o arquivo oficial do logo">
+      <img id="logoImg" alt="Leite de Rosas" style="display:none">
+      <div class="wordmark" id="logoFallback">Leite<small>de Rosas</small></div>
+    </div>
+    <div class="cab-txt">
+      <h1>Briefing de Desenvolvimento de Produto — HPPC</h1>
+      <p>Higiene Pessoal, Perfumaria e Cosméticos · processo Stage-Gate</p>
+    </div>
+    <div class="cab-dir">
+      <span class="selo ok" id="seloAuto">rascunho salvo automaticamente</span>
+    </div>
+  </div>
+  <input type="file" id="logoInput" accept="image/*" hidden>
+</header>
+
+<main>
+  <div class="aviso">
+    <b>Como usar.</b> Preencha o que souber — nada aqui é obrigatório para exportar. Ao clicar em
+    <b>Exportar XLSX</b>, o formulário gera uma planilha-base com as abas Briefing, Mercado, Custos e Scorecard,
+    <b>já com as fórmulas vivas</b>: mudar um custo na planilha recalcula margem, preço mínimo e score.
+    Para o modelo completo — viabilidade em 3 anos, cronograma, riscos e checklist de gate —
+    use o arquivo <b>briefing_hppc_leite_de_rosas.xlsx</b> e cole aqui os campos exportados.
+    O rascunho fica salvo neste navegador.
+  </div>
+  <div id="form"></div>
+</main>
+
+<div class="barra">
+  <div class="barra-in">
+    <div class="kpis">
+      <div class="kpi"><b>CPV unitário</b><span id="kCpv">—</span></div>
+      <div class="kpi"><b>Preço de fábrica</b><span id="kPf">—</span></div>
+      <div class="kpi"><b>Margem contrib.</b><span id="kMc">—</span></div>
+      <div class="kpi"><b>Equilíbrio/mês</b><span id="kBe">—</span></div>
+      <div class="kpi"><b>Score</b><span id="kScore">—</span></div>
+      <div class="kpi"><b>Veredito</b><span id="kVer">—</span></div>
+    </div>
+    <div class="acoes">
+      <button class="sec" onclick="salvarJson()">Baixar rascunho (.json)</button>
+      <button class="sec" onclick="document.getElementById('jsonInput').click()">Carregar rascunho</button>
+      <button class="sec" onclick="window.print()">Imprimir</button>
+      <button onclick="exportarXlsx()">Exportar XLSX</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="jsonInput" accept="application/json" hidden>
+<footer>
+  Leite de Rosas · rosa institucional <code>#EC008C</code>. Para usar o logo oficial, clique na marca no topo
+  e selecione o arquivo, ou salve-o como <code>assets/logo-leite-de-rosas.png</code> ao lado deste HTML.
+</footer>
+
+<script>
+/* =====================================================================
+   Briefing HPPC · Leite de Rosas — formulário que exporta XLSX com fórmulas
+   Sem dependências externas: o gerador de XLSX (ZIP + XML) está aqui dentro.
+   ===================================================================== */
+
+/* ------------------------------------------------------------ esquema */
+const SECOES = [
+  { id:'ident', t:'1.1 Identificação do projeto', g:2, f:[
+    {k:'codigo', l:'Código do projeto', h:'Padrão BRF_&lt;ano&gt;_&lt;nº&gt;. Ex.: BRF_2026_004.'},
+    {k:'nome', l:'Nome de trabalho', h:'Nome interno, não é o nome comercial.'},
+    {k:'marca', l:'Marca / arquitetura', tp:'select', o:['','Leite de Rosas — extensão de linha','Leite de Rosas — sub-marca','Outra marca do portfólio','Marca nova']},
+    {k:'categoria', l:'Categoria HPPC', tp:'select', o:['','Desodorante','Talco','Higiene corporal','Cuidado facial','Cabelos','Infantil','Perfumaria','Higiene íntima','Outra']},
+    {k:'tipo', l:'Tipo de projeto', tp:'select', o:['','Novo produto','Extensão de linha','Renovação de fórmula','Novo tamanho','Restyling de embalagem','Redução de custo']},
+    {k:'solicitante', l:'Solicitante / área'},
+    {k:'patrocinador', l:'Patrocinador (Diretoria)'},
+    {k:'dt_abertura', l:'Data de abertura', tp:'date'},
+    {k:'gate', l:'Gate atual', tp:'select', o:['','G0 Ideia','G1 Conceito','G2 Viabilidade','G3 Desenvolvimento','G4 Industrialização','G5 Lançamento']},
+    {k:'prioridade', l:'Prioridade declarada', tp:'select', o:['','Alta','Média','Baixa']},
+  ]},
+  { id:'contexto', t:'1.2 Contexto e racional', g:1, f:[
+    {k:'problema', l:'Problema ou oportunidade', tp:'textarea', h:'Uma frase objetiva. O que justifica gastar dinheiro nisso.'},
+    {k:'porque_agora', l:'Por que agora', tp:'textarea', h:'Gatilho de timing: hábito, concorrente, canal, sazonalidade, regulação.'},
+    {k:'encaixe', l:'Encaixe estratégico', tp:'textarea', h:'Como reduz a concentração de faturamento em poucos SKUs, ou como defende o carro-chefe.'},
+    {k:'nao_fazer', l:'O que acontece se não fizermos', tp:'textarea', h:'O custo de não fazer. Se a resposta for "nada", o projeto não deveria existir.'},
+    {k:'alavanca', l:'Alavanca de marca utilizada', tp:'textarea', h:'Reconhecimento, território de frescor e cuidado, o rosa, tradição, distribuição.'},
+  ]},
+  { id:'metas', t:'1.3 Objetivo e metas', g:2, f:[
+    {k:'objetivo', l:'Objetivo do produto (1 frase)', tp:'textarea', full:true},
+    {k:'meta_vol', l:'Meta de volume — Ano 1 (un.)', tp:'number', calc:true},
+    {k:'meta_rec', l:'Meta de receita líquida — Ano 1 (R$)', tp:'number'},
+    {k:'mc_alvo', l:'Margem de contribuição-alvo (%)', tp:'number', step:'0.1', calc:true, h:'Digite em pontos percentuais. Ex.: 35'},
+    {k:'meta_pdv', l:'Distribuição-alvo (nº de PDVs)', tp:'number'},
+  ]},
+  { id:'consumidor', t:'1.4 Consumidor e ocasião de uso', g:1, f:[
+    {k:'publico1', l:'Público-alvo primário', tp:'textarea', h:'Demografia + comportamento. Demografia sozinha não é público-alvo.'},
+    {k:'publico2', l:'Público-alvo secundário'},
+    {k:'ocasiao', l:'Ocasião e frequência de uso', tp:'textarea'},
+    {k:'dor', l:'Dor / tensão do consumidor', tp:'textarea'},
+    {k:'insight', l:'Insight', tp:'textarea', h:'A verdade não óbvia que liga a dor ao produto. Se soa como slogan, ainda não é insight.'},
+    {k:'barreira', l:'Barreira de adoção esperada', tp:'textarea'},
+  ]},
+  { id:'conceito', t:'1.5 Conceito de produto', g:1, f:[
+    {k:'conceito', l:'Conceito em uma frase', tp:'textarea'},
+    {k:'benef1', l:'Benefício principal', h:'Um só. O que o consumidor lembraria 3 dias depois.'},
+    {k:'benef2', l:'Benefícios secundários', h:'No máximo dois. O terceiro dilui os outros.'},
+    {k:'rtb', l:'Reason to believe (RTB)', tp:'textarea'},
+    {k:'ativos', l:'Ativos / ingredientes-chave (INCI)', tp:'textarea'},
+    {k:'claims', l:'Claims pretendidos', tp:'textarea', h:'Separe claims de rotulagem dos publicitários. Cada um precisa de lastro.'},
+    {k:'sensorial', l:'Sensorial alvo', tp:'textarea', h:'Textura, absorção, toque residual, cor, fragrância e intensidade.'},
+    {k:'tamanhos', l:'Tamanhos / apresentações'},
+    {k:'benchmark_prod', l:'Produto de referência (benchmark)'},
+    {k:'nao_e', l:'O que este produto NÃO é', tp:'textarea'},
+  ]},
+  { id:'posic', t:'1.6 Posicionamento, preço e canal', g:2, f:[
+    {k:'posicionamento', l:'Posicionamento em uma frase', tp:'textarea', full:true, h:'Para &lt;público&gt;, &lt;produto&gt; é a &lt;categoria&gt; que &lt;benefício&gt; porque &lt;RTB&gt;.'},
+    {k:'faixa_preco', l:'Faixa de preço pretendida', tp:'select', o:['','Popular','Mainstream','Premium acessível','Premium']},
+    {k:'canal1', l:'Canal prioritário', tp:'select', o:['','Farma','Atacarejo','Supermercado','Varejo tradicional','Distribuidor','E-commerce / marketplace','Perfumaria']},
+    {k:'canal2', l:'Canais secundários'},
+    {k:'regioes', l:'Regiões prioritárias'},
+    {k:'canibal', l:'Risco de canibalização', tp:'textarea', full:true},
+  ]},
+  { id:'restr', t:'1.7 Restrições e condições de contorno', g:2, f:[
+    {k:'make_buy', l:'Make or buy', tp:'select', o:['','Produção interna','Terceirização (co-packer)','Híbrido']},
+    {k:'capex_max', l:'Capex máximo autorizado (R$)', tp:'number'},
+    {k:'prazo_max', l:'Prazo máximo até o lançamento (meses)', tp:'number'},
+    {k:'restr_fabril', l:'Restrições fabris / logísticas', tp:'textarea', full:true},
+    {k:'restr_reg', l:'Restrições regulatórias', tp:'textarea', full:true},
+    {k:'restr_marca', l:'Restrições de marca / jurídico', tp:'textarea', full:true},
+  ]},
+  { id:'sucesso', t:'1.8 Métricas de sucesso e critério de morte', g:2, f:[
+    {k:'kpi1', l:'KPI primário', h:'Uma métrica só, com número e data.'},
+    {k:'kpi2', l:'KPIs secundários', h:'No máximo três.'},
+    {k:'kill', l:'Critério de kill', tp:'textarea', full:true, h:'A condição objetiva que encerra o projeto. Definida antes, não depois.'},
+    {k:'dt_revisao', l:'Data da primeira revisão', tp:'date'},
+  ]},
+  { id:'mercado', t:'2 · Dimensionamento de mercado', g:3, f:[
+    {k:'pop', l:'População do público-alvo (pessoas)', tp:'number', calc:true},
+    {k:'penetracao', l:'Penetração da categoria (%)', tp:'number', step:'0.1', calc:true},
+    {k:'freq', l:'Frequência de compra (un./ano)', tp:'number', step:'0.1', calc:true},
+    {k:'preco_medio', l:'Preço médio de gôndola da categoria (R$)', tp:'number', step:'0.01', calc:true},
+    {k:'cobertura', l:'Cobertura de distribuição alcançável (%)', tp:'number', step:'0.1', calc:true},
+    {k:'share', l:'Share-alvo dentro do SAM (%)', tp:'number', step:'0.1', calc:true},
+    {k:'fonte_mercado', l:'Fonte dos dados de mercado', full:true, h:'Nielsen, Scanntech, ABIHPEC, coleta própria de PDV, estimativa interna.'},
+  ]},
+  { id:'custos', t:'5 · Custo industrial e precificação', g:3, f:[
+    {k:'gramatura', l:'Gramatura líquida por unidade (g ou ml)', tp:'number', step:'0.01', calc:true},
+    {k:'perda', l:'Perda de processo e envase (%)', tp:'number', step:'0.1', calc:true},
+    {k:'custo_emb', l:'Custo de embalagem por unidade (R$)', tp:'number', step:'0.0001', calc:true},
+    {k:'custo_conv', l:'Custo de conversão por unidade (R$)', tp:'number', step:'0.0001', calc:true},
+    {k:'custo_frete', l:'Frete e armazenagem por unidade (R$)', tp:'number', step:'0.0001', calc:true},
+    {k:'preco_gondola', l:'Preço-alvo de gôndola (R$)', tp:'number', step:'0.01', calc:true},
+    {k:'markup_varejo', l:'Margem do varejo sobre o preço de fábrica (%)', tp:'number', step:'0.1', calc:true},
+    {k:'impostos', l:'Carga tributária sobre faturamento (%)', tp:'number', step:'0.1', calc:true},
+    {k:'descontos', l:'Descontos e verbas comerciais (%)', tp:'number', step:'0.1', calc:true},
+    {k:'fixos', l:'Custos fixos incrementais mensais (R$)', tp:'number', calc:true},
+    {k:'mkt_mes', l:'Investimento de marketing mensal (R$)', tp:'number', calc:true},
+  ]},
+];
+
+const CRITERIOS = [
+  ['Aderência à estratégia e à marca', 0.15],
+  ['Tamanho da oportunidade (SOM)', 0.15],
+  ['Margem de contribuição', 0.15],
+  ['Investimento requerido (quanto menor, melhor)', 0.10],
+  ['Velocidade até o mercado', 0.10],
+  ['Complexidade técnica e regulatória (quanto menor, melhor)', 0.08],
+  ['Sinergia fabril e logística', 0.07],
+  ['Força do conceito para o consumidor', 0.10],
+  ['Baixo risco de canibalização (quanto menor, melhor)', 0.05],
+  ['Sustentabilidade da vantagem', 0.05],
+];
+
+/* Valores e prazos informados pela equipe técnica da Leite de Rosas.
+   Prazo null = ainda não informado (pendência sinalizada no formulário e no XLSX). */
+const TESTES_BASICOS = [
+  ['Time kill', 1264.00, 30],
+  ['Teste de segurança após time kill (dermatológico)', 600.00, null],
+  ['Eficácia (sniff test) + reemissões', 1900.00, null],
+  ['Apreciabilidade cosmética (user experience)', 1350.00, null],
+];
+const TESTES_ESP_SUGERIDOS = [
+  ['Estabilidade acelerada','Todos'],
+  ['Estabilidade normal / prateleira','Todos'],
+  ['Compatibilidade com a embalagem','Todos'],
+  ['Desafio microbiológico (challenge test)','Todos'],
+  ['Eficácia antitranspirante / gravimetria','Desodorante antitranspirante'],
+  ['Teste de válvula, pressão e vazão','Aerossol e sprays'],
+  ['Granulometria e escoamento','Talcos e pós'],
+  ['Viscosidade e estabilidade em ciclos','Desodorante líquido, loções e cremes'],
+];
+
+/* ------------------------------------------------------- render do form */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cont = $('#form');
+
+function campoHtml(f){
+  const id = 'f_'+f.k;
+  const hint = f.h ? `<p class="hint">${f.h}</p>` : '';
+  let ctrl;
+  if(f.tp === 'textarea')      ctrl = `<textarea id="${id}" data-k="${f.k}"></textarea>`;
+  else if(f.tp === 'select')   ctrl = `<select id="${id}" data-k="${f.k}">${f.o.map(o=>`<option value="${esc(o)}">${esc(o||'—')}</option>`).join('')}</select>`;
+  else if(f.tp === 'number')   ctrl = `<input id="${id}" data-k="${f.k}" type="number" step="${f.step||'1'}" ${f.calc?'data-calc="1"':''}>`;
+  else if(f.tp === 'date')     ctrl = `<input id="${id}" data-k="${f.k}" type="date">`;
+  else                         ctrl = `<input id="${id}" data-k="${f.k}" type="text">`;
+  return `<div class="campo" ${f.full?'style="grid-column:1/-1"':''}><label for="${id}">${f.l}</label>${hint}${ctrl}</div>`;
+}
+
+let html = '';
+for(const s of SECOES){
+  html += `<section id="s_${s.id}"><h2>${esc(s.t)}</h2><div class="corpo">
+    <div class="${s.g===1?'':'grade'+s.g}">${s.f.map(campoHtml).join('')}</div>`;
+  if(s.id === 'mercado'){
+    html += `<div class="tab-wrap" style="margin-top:14px"><table><thead><tr>
+      <th>Indicador calculado</th><th class="num">Valor</th><th>Como é calculado</th></tr></thead>
+      <tbody>
+      <tr><td>Consumidores da categoria</td><td class="num" id="mCons">—</td><td>população × penetração</td></tr>
+      <tr><td>Volume potencial da categoria</td><td class="num" id="mVol">—</td><td>consumidores × frequência</td></tr>
+      <tr><td>TAM — mercado potencial</td><td class="num" id="mTam">—</td><td>volume × preço médio</td></tr>
+      <tr><td>SAM — mercado endereçável</td><td class="num" id="mSam">—</td><td>TAM × cobertura</td></tr>
+      <tr><td><b>SOM — receita capturável no Ano 1</b></td><td class="num" id="mSom">—</td><td>SAM × share-alvo</td></tr>
+      <tr><td>SOM em unidades</td><td class="num" id="mSomUn">—</td><td>SOM ÷ preço médio</td></tr>
+      <tr><td>Consistência entre meta de volume e SOM</td><td class="num" id="mCheck">—</td><td>meta ÷ SOM − 1. Positivo, a meta é maior que o mercado capturável.</td></tr>
+      </tbody></table></div>`;
+  }
+  if(s.id === 'custos'){
+    html += `<h3 style="font-size:13px;margin:18px 0 6px">BOM da fórmula (base 100% da massa)</h3>
+      <div class="tab-wrap"><table id="tBom"><thead><tr>
+        <th style="min-width:180px">Matéria-prima</th><th style="min-width:150px">Função / INCI</th>
+        <th class="num" style="width:110px">% na fórmula</th><th class="num" style="width:120px">Preço (R$/kg)</th>
+        <th class="num" style="width:130px">Custo por kg (R$)</th><th style="width:44px"></th></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr><td colspan="2">Soma da fórmula</td><td class="num" id="bomPct">—</td>
+        <td class="num">custo por kg de massa</td><td class="num" id="bomKg">—</td><td></td></tr></tfoot></table></div>
+      <p><button class="mini sec" onclick="addBom()">+ linha de matéria-prima</button>
+         <span id="bomAviso" class="selo at" style="margin-left:8px"></span></p>
+      <div class="tab-wrap" style="margin-top:14px"><table><thead><tr>
+        <th>Resultado</th><th class="num">Valor</th><th>Como é calculado</th></tr></thead><tbody>
+        <tr><td>Custo da fórmula por unidade</td><td class="num" id="cCf">—</td><td>custo por kg × gramatura ÷ 1000 × (1 + perda)</td></tr>
+        <tr><td><b>Custo industrial total (CPV unitário)</b></td><td class="num" id="cCpv">—</td><td>fórmula + embalagem + conversão + frete</td></tr>
+        <tr><td>Preço de fábrica implícito</td><td class="num" id="cPf">—</td><td>gôndola ÷ (1 + margem do varejo)</td></tr>
+        <tr><td>Receita líquida por unidade</td><td class="num" id="cRl">—</td><td>preço de fábrica × (1 − impostos − descontos)</td></tr>
+        <tr><td>Margem de contribuição por unidade</td><td class="num" id="cMcUn">—</td><td>receita líquida − CPV</td></tr>
+        <tr><td><b>Margem de contribuição (%)</b></td><td class="num" id="cMcPct">—</td><td>MC ÷ receita líquida</td></tr>
+        <tr><td>Markup sobre o custo industrial</td><td class="num" id="cMk">—</td><td>preço de fábrica ÷ CPV</td></tr>
+        <tr><td>Preço de fábrica mínimo para a margem-alvo</td><td class="num" id="cPfMin">—</td><td>CPV ÷ [(1 − MC alvo) × (1 − impostos − descontos)]</td></tr>
+        <tr><td>Preço de gôndola mínimo para a margem-alvo</td><td class="num" id="cGondMin">—</td><td>preço de fábrica mínimo × (1 + margem do varejo)</td></tr>
+        <tr><td>Volume mensal de equilíbrio</td><td class="num" id="cBe">—</td><td>(fixos + marketing) ÷ MC unitária</td></tr>
+        <tr><td><b>Veredito de precificação</b></td><td class="num" id="cVer">—</td><td>compara a MC calculada com a margem-alvo do briefing</td></tr>
+      </tbody></table></div>`;
+  }
+  html += `</div></section>`;
+}
+
+/* ---- testes ---- */
+html += `<section id="s_testes"><h2>3 · Plano de testes <span>— valores por variação de fórmula</span></h2><div class="corpo">
+  <div class="campo" style="max-width:320px">
+    <label for="f_nvar">Nº de variações de fórmula a testar</label>
+    <p class="hint">Cada variação é testada separadamente. Três variações multiplicam o custo básico por três.</p>
+    <input id="f_nvar" data-k="nvar" data-calc="1" type="number" min="1" step="1" value="1">
+  </div>
+  <h3 style="font-size:13px;margin:18px 0 6px">Testes básicos — aplicáveis a todo o portfólio</h3>
+  <div class="tab-wrap"><table id="tBas"><thead><tr>
+    <th>Teste</th><th class="num" style="width:140px">Valor unitário (R$)</th>
+    <th class="num" style="width:120px">Prazo (dias)</th><th class="num" style="width:140px">Custo total (R$)</th></tr></thead>
+    <tbody></tbody>
+    <tfoot><tr><td>Subtotal dos testes básicos</td><td class="num" id="basUnit">—</td>
+      <td class="num" id="basPrazo">—</td><td class="num" id="basTotal">—</td></tr></tfoot></table></div>
+  <p class="hint" id="basPend"></p>
+  <h3 style="font-size:13px;margin:18px 0 6px">Testes específicos por tipo de produto e complementares</h3>
+  <div class="tab-wrap"><table id="tEsp"><thead><tr>
+    <th style="min-width:200px">Teste</th><th style="min-width:160px">Tipo de produto / aplicação</th>
+    <th class="num" style="width:130px">Valor unitário (R$)</th><th class="num" style="width:110px">Prazo (dias)</th>
+    <th class="num" style="width:130px">Custo total (R$)</th><th style="width:44px"></th></tr></thead>
+    <tbody></tbody>
+    <tfoot><tr><td colspan="2">Subtotal dos testes específicos</td><td class="num" id="espUnit">—</td>
+      <td class="num" id="espPrazo">—</td><td class="num" id="espTotal">—</td><td></td></tr></tfoot></table></div>
+  <p><button class="mini sec" onclick="addEsp()">+ linha de teste específico</button></p>
+  <div class="tab-wrap" style="margin-top:14px"><table><thead><tr><th>Consolidado</th><th class="num">Valor</th><th>Leitura</th></tr></thead><tbody>
+    <tr><td><b>Custo total do plano de testes</b></td><td class="num" id="tstTotal">—</td><td>entra como investimento no Ano 0 da viabilidade</td></tr>
+    <tr><td>Prazo — cenário sequencial (dias)</td><td class="num" id="tstSeq">—</td><td>teto: um teste depois do outro</td></tr>
+    <tr><td>Prazo — cenário paralelo (dias)</td><td class="num" id="tstPar">—</td><td>piso: maior teste individual</td></tr>
+    <tr><td>Custo por variação adicional</td><td class="num" id="tstVar">—</td><td>quanto custa levar mais uma fórmula candidata até o fim do plano</td></tr>
+  </tbody></table></div>
+</div></section>`;
+
+/* ---- scorecard ---- */
+html += `<section id="s_score"><h2>7 · Scorecard de priorização</h2><div class="corpo">
+  <div class="tab-wrap"><table id="tScore"><thead><tr>
+    <th>Critério</th><th class="num" style="width:110px">Peso (%)</th>
+    <th class="num" style="width:110px">Nota (1-5)</th><th class="num" style="width:120px">Ponderado</th></tr></thead>
+    <tbody></tbody>
+    <tfoot><tr><td>Score ponderado</td><td class="num" id="scPeso">—</td><td class="num" id="scN">—</td><td class="num" id="scTotal">—</td></tr></tfoot></table></div>
+  <p style="margin-top:10px"><span id="scClasse" class="selo at">pontue todos os critérios</span></p>
+</div></section>`;
+
+cont.innerHTML = html;
+
+/* linhas dinâmicas */
+function addBom(nome='', inci='', pct='', preco=''){
+  const tb = $('#tBom tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input class="b-nome" value="${esc(nome)}"></td>
+    <td><input class="b-inci" value="${esc(inci)}"></td>
+    <td><input class="b-pct num" type="number" step="0.01" value="${pct}"></td>
+    <td><input class="b-preco num" type="number" step="0.0001" value="${preco}"></td>
+    <td class="num b-custo">—</td>
+    <td><button class="mini sec" onclick="this.closest('tr').remove();calcular()">×</button></td>`;
+  tb.appendChild(tr);
+  tr.querySelectorAll('input').forEach(i=>i.addEventListener('input', calcular));
+}
+function addEsp(nome='', tipo='', valor='', prazo=''){
+  const tb = $('#tEsp tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input class="e-nome" value="${esc(nome)}"></td>
+    <td><input class="e-tipo" value="${esc(tipo)}"></td>
+    <td><input class="e-valor num" type="number" step="0.01" value="${valor}"></td>
+    <td><input class="e-prazo num" type="number" step="1" value="${prazo}"></td>
+    <td class="num e-total">—</td>
+    <td><button class="mini sec" onclick="this.closest('tr').remove();calcular()">×</button></td>`;
+  tb.appendChild(tr);
+  tr.querySelectorAll('input').forEach(i=>i.addEventListener('input', calcular));
+}
+
+TESTES_BASICOS.forEach(([nome, valor, prazo], i) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${esc(nome)}</td>
+    <td><input class="tb-valor num" type="number" step="0.01" value="${valor.toFixed(2)}"></td>
+    <td><input class="tb-prazo num" type="number" step="1" value="${prazo==null?'':prazo}"
+        ${prazo==null?'placeholder="a confirmar"':''}></td>
+    <td class="num tb-total">—</td>`;
+  $('#tBas tbody').appendChild(tr);
+  tr.querySelectorAll('input').forEach(x=>x.addEventListener('input', calcular));
+});
+TESTES_ESP_SUGERIDOS.forEach(([n,t]) => addEsp(n,t));
+for(let i=0;i<4;i++) addBom();
+
+CRITERIOS.forEach(([nome, peso]) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${esc(nome)}</td>
+    <td><input class="sc-peso num" type="number" step="0.1" value="${(peso*100).toFixed(1)}"></td>
+    <td><select class="sc-nota"><option value=""></option>${[1,2,3,4,5].map(n=>`<option>${n}</option>`).join('')}</select></td>
+    <td class="num sc-pond">—</td>`;
+  $('#tScore tbody').appendChild(tr);
+  tr.querySelectorAll('input,select').forEach(x=>x.addEventListener('input', calcular));
+  tr.querySelector('select').addEventListener('change', calcular);
+});
+
+/* -------------------------------------------------------------- cálculo */
+const brl = v => isFinite(v) ? v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+const brl0 = v => isFinite(v) ? v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}) : '—';
+const nb = (v,d=0) => isFinite(v) ? v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '—';
+const pct = v => isFinite(v) ? (v*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%' : '—';
+const val = k => { const el = document.querySelector(`[data-k="${k}"]`); return el ? el.value : ''; };
+const num = k => { const v = parseFloat(String(val(k)).replace(',','.')); return isFinite(v) ? v : 0; };
+const p100 = k => num(k)/100;
+
+let M = {};   // resultados correntes, usados também na exportação
+
+function calcular(){
+  // --- mercado
+  const cons = num('pop') * p100('penetracao');
+  const volCat = cons * num('freq');
+  const tam = volCat * num('preco_medio');
+  const sam = tam * p100('cobertura');
+  const som = sam * p100('share');
+  const somUn = num('preco_medio') ? som / num('preco_medio') : 0;
+  const check = somUn ? num('meta_vol')/somUn - 1 : NaN;
+  $('#mCons').textContent = nb(cons);
+  $('#mVol').textContent  = nb(volCat);
+  $('#mTam').textContent  = brl0(tam);
+  $('#mSam').textContent  = brl0(sam);
+  $('#mSom').textContent  = brl0(som);
+  $('#mSomUn').textContent= nb(somUn);
+  $('#mCheck').textContent= isFinite(check) ? pct(check) : '—';
+
+  // --- BOM
+  let somaPct = 0, custoKg = 0;
+  $('#tBom tbody').querySelectorAll('tr').forEach(tr => {
+    const pc = parseFloat(tr.querySelector('.b-pct').value)/100 || 0;
+    const pr = parseFloat(tr.querySelector('.b-preco').value) || 0;
+    somaPct += pc; custoKg += pc*pr;
+    tr.querySelector('.b-custo').textContent = (pc&&pr) ? brl(pc*pr) : '—';
+  });
+  $('#bomPct').textContent = pct(somaPct);
+  $('#bomKg').textContent  = brl(custoKg);
+  const av = $('#bomAviso');
+  if(Math.abs(somaPct-1) < 0.0001){ av.textContent = 'fórmula fecha 100%'; av.className = 'selo ok'; }
+  else if(somaPct === 0){ av.textContent = 'BOM ainda vazio'; av.className = 'selo at'; }
+  else { av.textContent = 'não fecha 100% — faltam ' + pct(1-somaPct); av.className = 'selo er'; }
+
+  // --- custo e preço
+  const cf   = custoKg * num('gramatura')/1000 * (1 + p100('perda'));
+  const cpv  = cf + num('custo_emb') + num('custo_conv') + num('custo_frete');
+  const mkv  = p100('markup_varejo');
+  const pf   = (1+mkv) ? num('preco_gondola')/(1+mkv) : 0;
+  const rl   = pf * (1 - p100('impostos') - p100('descontos'));
+  const mcUn = rl - cpv;
+  const mcPct= rl ? mcUn/rl : 0;
+  const alvo = p100('mc_alvo');
+  const den  = (1-alvo)*(1 - p100('impostos') - p100('descontos'));
+  const pfMin= den ? cpv/den : 0;
+  const be   = mcUn > 0 ? (num('fixos')+num('mkt_mes'))/mcUn : 0;
+  $('#cCf').textContent    = brl(cf);
+  $('#cCpv').textContent   = brl(cpv);
+  $('#cPf').textContent    = brl(pf);
+  $('#cRl').textContent    = brl(rl);
+  $('#cMcUn').textContent  = brl(mcUn);
+  $('#cMcPct').textContent = rl ? pct(mcPct) : '—';
+  $('#cMk').textContent    = cpv ? nb(pf/cpv,2)+'x' : '—';
+  $('#cPfMin').textContent = brl(pfMin);
+  $('#cGondMin').textContent = brl(pfMin*(1+mkv));
+  $('#cBe').textContent    = be ? nb(be) : '—';
+  let ver;
+  if(!rl) ver = 'preencha as premissas';
+  else if(mcPct >= alvo && alvo > 0) ver = 'APROVADO — margem acima do alvo';
+  else if(alvo <= 0) ver = 'defina a margem-alvo no campo 1.3';
+  else if(mcPct >= alvo*0.9) ver = 'ATENÇÃO — até 10% abaixo do alvo';
+  else ver = 'REPROVADO — margem insuficiente';
+  $('#cVer').textContent = ver;
+
+  // --- testes
+  const nvar = Math.max(1, num('nvar') || 1);
+  let basUnit = 0, basPrazo = 0, basTotal = 0, basMax = 0, pend = 0;
+  $('#tBas tbody').querySelectorAll('tr').forEach(tr => {
+    const v = parseFloat(tr.querySelector('.tb-valor').value) || 0;
+    const pz = tr.querySelector('.tb-prazo').value;
+    const pzn = parseFloat(pz) || 0;
+    if(pz === '') pend++;
+    basUnit += v; basTotal += v*nvar; basPrazo += pzn; basMax = Math.max(basMax, pzn);
+    tr.querySelector('.tb-total').textContent = v ? brl(v*nvar) : '—';
+  });
+  $('#basUnit').textContent = brl(basUnit);
+  $('#basPrazo').textContent = nb(basPrazo);
+  $('#basTotal').textContent = brl0(basTotal);
+  $('#basPend').innerHTML = pend
+    ? `<span class="selo er">faltam ${pend} prazo(s)</span> Confirme com o laboratório antes de fechar o cronograma. O teste dermatológico só começa depois do time kill — esses dois são sequenciais.`
+    : `<span class="selo ok">todos os prazos informados</span> O teste dermatológico só começa depois do time kill — esses dois são sequenciais.`;
+
+  let espUnit = 0, espTotal = 0, espPrazo = 0, espMax = 0;
+  $('#tEsp tbody').querySelectorAll('tr').forEach(tr => {
+    const v = parseFloat(tr.querySelector('.e-valor').value) || 0;
+    const pz = parseFloat(tr.querySelector('.e-prazo').value) || 0;
+    espUnit += v; espTotal += v*nvar; espPrazo += pz; espMax = Math.max(espMax, pz);
+    tr.querySelector('.e-total').textContent = v ? brl(v*nvar) : '—';
+  });
+  $('#espUnit').textContent = brl(espUnit);
+  $('#espTotal').textContent = brl0(espTotal);
+  $('#espPrazo').textContent = nb(espPrazo);
+  $('#tstTotal').textContent = brl0(basTotal + espTotal);
+  $('#tstSeq').textContent   = nb(basPrazo + espPrazo);
+  $('#tstPar').textContent   = nb(Math.max(basMax, espMax));
+  $('#tstVar').textContent   = brl(basUnit + espUnit);
+
+  // --- scorecard
+  let peso = 0, score = 0, n = 0;
+  $('#tScore tbody').querySelectorAll('tr').forEach(tr => {
+    const p = parseFloat(tr.querySelector('.sc-peso').value)/100 || 0;
+    const nt = parseFloat(tr.querySelector('.sc-nota').value);
+    peso += p;
+    tr.querySelector('.sc-pond').textContent = isFinite(nt) ? nb(p*nt,2) : '—';
+    if(isFinite(nt)){ score += p*nt; n++; }
+  });
+  $('#scPeso').textContent  = pct(peso);
+  $('#scN').textContent     = n + '/10';
+  $('#scTotal').textContent = nb(score,2);
+  const cl = $('#scClasse');
+  if(n < 10){ cl.textContent = 'incompleto — pontue todos os critérios'; cl.className = 'selo at'; }
+  else if(score >= 4){ cl.textContent = 'PRIORIDADE MÁXIMA — entra na fila agora'; cl.className = 'selo ok'; }
+  else if(score >= 3.2){ cl.textContent = 'APROVADO — entra na fila conforme capacidade'; cl.className = 'selo ok'; }
+  else if(score >= 2.5){ cl.textContent = 'REVISAR — reformular conceito, custo ou escopo'; cl.className = 'selo at'; }
+  else { cl.textContent = 'DESCARTAR — não justifica o esforço'; cl.className = 'selo er'; }
+
+  M = {cons, volCat, tam, sam, som, somUn, somaPct, custoKg, cf, cpv, pf, rl, mcUn, mcPct,
+       pfMin, be, ver, nvar, basTotal, espTotal, score, peso, classe: cl.textContent};
+  salvarLocal();
+}
+
+/* ------------------------------------------------------- persistência */
+function coletar(){
+  const d = {campos:{}, bom:[], esp:[], bas:[], score:[], logo: localStorage.getItem('lr_logo')||''};
+  document.querySelectorAll('[data-k]').forEach(el => d.campos[el.dataset.k] = el.value);
+  $('#tBom tbody').querySelectorAll('tr').forEach(tr => d.bom.push([
+    tr.querySelector('.b-nome').value, tr.querySelector('.b-inci').value,
+    tr.querySelector('.b-pct').value, tr.querySelector('.b-preco').value]));
+  $('#tEsp tbody').querySelectorAll('tr').forEach(tr => d.esp.push([
+    tr.querySelector('.e-nome').value, tr.querySelector('.e-tipo').value,
+    tr.querySelector('.e-valor').value, tr.querySelector('.e-prazo').value]));
+  $('#tBas tbody').querySelectorAll('tr').forEach(tr => d.bas.push([
+    tr.querySelector('.tb-valor').value, tr.querySelector('.tb-prazo').value]));
+  $('#tScore tbody').querySelectorAll('tr').forEach(tr => d.score.push([
+    tr.querySelector('.sc-peso').value, tr.querySelector('.sc-nota').value]));
+  return d;
+}
+function aplicar(d){
+  if(!d) return;
+  Object.entries(d.campos||{}).forEach(([k,v]) => {
+    const el = document.querySelector(`[data-k="${k}"]`); if(el) el.value = v;
+  });
+  if(d.bom){ $('#tBom tbody').innerHTML=''; d.bom.forEach(l=>addBom(...l)); }
+  if(d.esp){ $('#tEsp tbody').innerHTML=''; d.esp.forEach(l=>addEsp(...l)); }
+  if(d.bas) $('#tBas tbody').querySelectorAll('tr').forEach((tr,i)=>{
+    if(!d.bas[i]) return;
+    tr.querySelector('.tb-valor').value = d.bas[i][0];
+    tr.querySelector('.tb-prazo').value = d.bas[i][1];
+  });
+  if(d.score) $('#tScore tbody').querySelectorAll('tr').forEach((tr,i)=>{
+    if(!d.score[i]) return;
+    tr.querySelector('.sc-peso').value = d.score[i][0];
+    tr.querySelector('.sc-nota').value = d.score[i][1];
+  });
+  if(d.logo) aplicarLogo(d.logo);
+  calcular();
+}
+let tSalvar;
+function salvarLocal(){
+  clearTimeout(tSalvar);
+  tSalvar = setTimeout(()=>{
+    try{ localStorage.setItem('lr_briefing_hppc', JSON.stringify(coletar())); }catch(e){}
+  }, 400);
+}
+function baixar(blob, nome){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function nomeArquivo(ext){
+  const c = (val('codigo')||'BRF').replace(/[^\w\-]+/g,'_');
+  const n = (val('nome')||'briefing').replace(/[^\w\-]+/g,'_');
+  return `${c}_${n}.${ext}`;
+}
+function salvarJson(){
+  baixar(new Blob([JSON.stringify(coletar(),null,2)],{type:'application/json'}), nomeArquivo('json'));
+}
+$('#jsonInput').addEventListener('change', ev => {
+  const f = ev.target.files[0]; if(!f) return;
+  const fr = new FileReader();
+  fr.onload = () => { try{ aplicar(JSON.parse(fr.result)); }catch(e){ alert('Arquivo inválido.'); } };
+  fr.readAsText(f);
+});
+
+/* ------------------------------------------------------------- logo */
+function aplicarLogo(src){
+  const img = $('#logoImg');
+  img.src = src; img.style.display = 'block';
+  $('#logoFallback').style.display = 'none';
+}
+$('#marca').addEventListener('click', () => $('#logoInput').click());
+$('#logoInput').addEventListener('change', ev => {
+  const f = ev.target.files[0]; if(!f) return;
+  const fr = new FileReader();
+  fr.onload = () => { try{ localStorage.setItem('lr_logo', fr.result); }catch(e){} aplicarLogo(fr.result); };
+  fr.readAsDataURL(f);
+});
+(function initLogo(){
+  const salvo = localStorage.getItem('lr_logo');
+  if(salvo) return aplicarLogo(salvo);
+  const teste = new Image();
+  teste.onload = () => aplicarLogo('assets/logo-leite-de-rosas.png');
+  teste.src = 'assets/logo-leite-de-rosas.png';
+})();
+
+/* =====================================================================
+   Gerador de XLSX — ZIP (store) + SpreadsheetML escritos à mão.
+   ===================================================================== */
+const CRC = (() => { const t = new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[n]=c>>>0; }
+  return t; })();
+function crc32(buf){ let c = 0xFFFFFFFF;
+  for(let i=0;i<buf.length;i++) c = CRC[(c ^ buf[i]) & 0xFF] ^ (c>>>8);
+  return (c ^ 0xFFFFFFFF) >>> 0; }
+const ENC = new TextEncoder();
+
+function zipar(arquivos){
+  const partes = [], central = [];
+  let offset = 0;
+  for(const a of arquivos){
+    const nome = ENC.encode(a.nome), dados = a.dados;
+    const crc = crc32(dados);
+    const lh = new Uint8Array(30 + nome.length), dv = new DataView(lh.buffer);
+    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x800, true);
+    dv.setUint16(8, 0, true); dv.setUint16(10, 0, true); dv.setUint16(12, 0, true);
+    dv.setUint32(14, crc, true); dv.setUint32(18, dados.length, true); dv.setUint32(22, dados.length, true);
+    dv.setUint16(26, nome.length, true); dv.setUint16(28, 0, true);
+    lh.set(nome, 30);
+    partes.push(lh, dados);
+    const ch = new Uint8Array(46 + nome.length), cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x800, true); cv.setUint16(10, 0, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0, true);
+    cv.setUint32(16, crc, true); cv.setUint32(20, dados.length, true); cv.setUint32(24, dados.length, true);
+    cv.setUint16(28, nome.length, true); cv.setUint16(30, 0, true); cv.setUint16(32, 0, true);
+    cv.setUint16(34, 0, true); cv.setUint16(36, 0, true); cv.setUint32(38, 0, true);
+    cv.setUint32(42, offset, true); ch.set(nome, 46);
+    central.push(ch);
+    offset += lh.length + dados.length;
+  }
+  const cdSize = central.reduce((s,c)=>s+c.length,0);
+  const eocd = new Uint8Array(22), ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, arquivos.length, true);
+  ev.setUint16(10, arquivos.length, true); ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
+  return new Blob([...partes, ...central, eocd], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+const xe = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const colLetra = n => { let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=(n-m-1)/26; } return s; };
+
+/* célula: T texto · N número · F fórmula · V vazia com estilo */
+const T = (v,s=0) => ({k:'t', v, s});
+const N = (v,s=0) => ({k:'n', v, s});
+const F = (v,s=0) => ({k:'f', v, s});
+const V = (s=0)   => ({k:'v', s});
+
+function planilhaXml(linhas, larguras){
+  let cols = '';
+  if(larguras) cols = '<cols>' + larguras.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('') + '</cols>';
+  let body = '';
+  linhas.forEach((cells, li) => {
+    const rn = li + 1;
+    let cs = '';
+    (cells||[]).forEach((c, ci) => {
+      if(!c) return;
+      const ref = colLetra(ci+1) + rn;
+      const st = c.s ? ` s="${c.s}"` : '';
+      if(c.k === 't' && c.v !== '' && c.v != null) cs += `<c r="${ref}"${st} t="inlineStr"><is><t xml:space="preserve">${xe(c.v)}</t></is></c>`;
+      else if(c.k === 'n' && isFinite(c.v))        cs += `<c r="${ref}"${st}><v>${c.v}</v></c>`;
+      else if(c.k === 'f')                         cs += `<c r="${ref}"${st}><f>${xe(c.v)}</f></c>`;
+      else                                          cs += `<c r="${ref}"${st}/>`;
+    });
+    if(cs) body += `<row r="${rn}">${cs}</row>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${cols}<sheetData>${body}</sheetData></worksheet>`;
+}
+
+const STYLES_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="4">
+<numFmt numFmtId="164" formatCode="&quot;R$&quot;\\ #,##0.00"/>
+<numFmt numFmtId="165" formatCode="0.0%"/>
+<numFmt numFmtId="166" formatCode="#,##0"/>
+<numFmt numFmtId="167" formatCode="#,##0.00"/>
+</numFmts>
+<fonts count="6">
+<font><sz val="10"/><name val="Arial"/></font>
+<font><b/><sz val="14"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>
+<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>
+<font><b/><sz val="10"/><color rgb="FF000000"/><name val="Arial"/></font>
+<font><sz val="10"/><color rgb="FF0000FF"/><name val="Arial"/></font>
+<font><i/><sz val="8"/><color rgb="FF666666"/><name val="Arial"/></font>
+</fonts>
+<fills count="5">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFEC008C"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFCE4F1"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFFF99"/><bgColor indexed="64"/></patternFill></fill>
+</fills>
+<borders count="2">
+<border><left/><right/><top/><bottom/><diagonal/></border>
+<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right><top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>
+</borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="15">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center"/></xf>
+<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="4" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="164" fontId="3" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="3" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>
+<xf numFmtId="166" fontId="3" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>
+<xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="164" fontId="4" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="165" fontId="4" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="166" fontId="4" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+<xf numFmtId="167" fontId="3" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1"/>
+<xf numFmtId="167" fontId="4" fillId="4" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>
+</cellXfs>
+</styleSheet>`;
+const S = {TIT:1, CAB:2, ROT:3, IN:4, TXT:5, BRL:6, PCT:7, NUM:8, NOTA:9, INBRL:10, INPCT:11, INNUM:12, NUM2:13, INNUM2:14};
+
+function montarXlsx(abas){
+  const nomes = abas.map(a=>a.nome);
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+${nomes.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}
+</Types>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+  const wb = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+ xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets>${nomes.map((n,i)=>`<sheet name="${xe(n)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets>
+<calcPr calcId="0" fullCalcOnLoad="1"/></workbook>`;
+  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+${nomes.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}
+<Relationship Id="rId${nomes.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+  const arquivos = [
+    {nome:'[Content_Types].xml', dados: ENC.encode(ct)},
+    {nome:'_rels/.rels', dados: ENC.encode(rels)},
+    {nome:'xl/workbook.xml', dados: ENC.encode(wb)},
+    {nome:'xl/_rels/workbook.xml.rels', dados: ENC.encode(wbRels)},
+    {nome:'xl/styles.xml', dados: ENC.encode(STYLES_XML)},
+  ];
+  abas.forEach((a,i) => arquivos.push({
+    nome:`xl/worksheets/sheet${i+1}.xml`,
+    dados: ENC.encode(planilhaXml(a.linhas, a.larguras)),
+  }));
+  return zipar(arquivos);
+}
+
+/* ------------------------------------------------- montagem das abas */
+function exportarXlsx(){
+  calcular();
+  const nvar = Math.max(1, num('nvar') || 1);
+  const abas = [];
+
+  /* ---------------------------------------------------- 2. Mercado */
+  const m = [];
+  const pm = l => (m.push(l), m.length);
+  pm([T('2 · DIMENSIONAMENTO DE MERCADO', S.TIT)]);
+  pm([]);
+  pm([T('Premissa',S.CAB), T('Valor',S.CAB), T('Unidade',S.CAB), T('Fonte / justificativa',S.CAB)]);
+  const rPop  = pm([T('População do público-alvo',S.ROT), N(num('pop'),S.INNUM), T('pessoas',S.NOTA), T(val('fonte_mercado'),S.NOTA)]);
+  const rPen  = pm([T('Penetração da categoria',S.ROT), N(p100('penetracao'),S.INPCT), T('% da população',S.NOTA)]);
+  const rCons = pm([T('Consumidores da categoria',S.ROT), F(`B${rPop}*B${rPen}`,S.NUM), T('pessoas',S.NOTA), T('população × penetração',S.NOTA)]);
+  const rFreq = pm([T('Frequência de compra',S.ROT), N(num('freq'),S.INNUM2), T('un./ano',S.NOTA)]);
+  const rVol  = pm([T('Volume potencial da categoria',S.ROT), F(`B${rCons}*B${rFreq}`,S.NUM), T('un./ano',S.NOTA), T('consumidores × frequência',S.NOTA)]);
+  const rPre  = pm([T('Preço médio de gôndola da categoria',S.ROT), N(num('preco_medio'),S.INBRL), T('R$/un.',S.NOTA)]);
+  const rTam  = pm([T('TAM — mercado potencial',S.ROT), F(`B${rVol}*B${rPre}`,S.BRL), T('R$/ano',S.NOTA), T('volume × preço médio',S.NOTA)]);
+  const rCob  = pm([T('Cobertura de distribuição alcançável',S.ROT), N(p100('cobertura'),S.INPCT), T('% do TAM',S.NOTA)]);
+  const rSam  = pm([T('SAM — mercado endereçável',S.ROT), F(`B${rTam}*B${rCob}`,S.BRL), T('R$/ano',S.NOTA), T('TAM × cobertura',S.NOTA)]);
+  const rShr  = pm([T('Share-alvo dentro do SAM',S.ROT), N(p100('share'),S.INPCT), T('%',S.NOTA)]);
+  const rSom  = pm([T('SOM — receita capturável no Ano 1',S.ROT), F(`B${rSam}*B${rShr}`,S.BRL), T('R$/ano',S.NOTA), T('SAM × share-alvo',S.NOTA)]);
+  const rSomU = pm([T('SOM em unidades',S.ROT), F(`IFERROR(B${rSom}/B${rPre},0)`,S.NUM), T('un./ano',S.NOTA), T('SOM ÷ preço médio',S.NOTA)]);
+  const rMeta = pm([T('Meta de volume declarada no briefing',S.ROT), N(num('meta_vol'),S.INNUM), T('un./ano',S.NOTA)]);
+  pm([T('Consistência entre meta e SOM',S.ROT), F(`IF(B${rSomU}=0,"",B${rMeta}/B${rSomU}-1)`,S.PCT), T('desvio',S.NOTA),
+      T('Acima de 0%, a meta é maior que o mercado capturável estimado.',S.NOTA)]);
+  abas.push({nome:'2. Mercado', linhas:m, larguras:[38,18,16,52]});
+
+  /* ----------------------------------------------------- 3. Testes */
+  const t = [];
+  const pt = l => (t.push(l), t.length);
+  pt([T('3 · PLANO DE TESTES', S.TIT)]);
+  pt([]);
+  const rNvar = pt([T('Nº de variações de fórmula a testar',S.ROT), N(nvar,S.INNUM), null, null,
+                    T('Cada variação é testada separadamente.',S.NOTA)]);
+  pt([]);
+  pt([T('Teste básico',S.CAB), T('Nº de variações',S.CAB), T('Valor unitário (R$)',S.CAB), T('Custo total (R$)',S.CAB), T('Prazo (dias)',S.CAB)]);
+  const basIni = t.length + 1;
+  const basIn = [...$('#tBas tbody').querySelectorAll('tr')].map(tr => ({
+    valor: parseFloat(tr.querySelector('.tb-valor').value),
+    prazo: tr.querySelector('.tb-prazo').value === '' ? null : parseFloat(tr.querySelector('.tb-prazo').value),
+  }));
+  TESTES_BASICOS.forEach(([nome], i) => {
+    const r = t.length + 1;
+    pt([T(nome,S.ROT), F(`$B$${rNvar}`,S.NUM), N(basIn[i]?.valor ?? 0, S.INBRL),
+        F(`IFERROR(B${r}*C${r},0)`,S.BRL),
+        basIn[i]?.prazo == null ? V(S.INNUM) : N(basIn[i].prazo, S.INNUM)]);
+  });
+  const basFim = t.length;
+  const basSub = pt([T('Subtotal dos testes básicos',S.ROT), F(`$B$${rNvar}`,S.NUM),
+                     F(`SUM(C${basIni}:C${basFim})`,S.BRL), F(`SUM(D${basIni}:D${basFim})`,S.BRL),
+                     F(`SUM(E${basIni}:E${basFim})`,S.NUM)]);
+  const basPar = pt([T('Prazo em cenário paralelo (maior teste básico)',S.ROT), null, null, null,
+                     F(`IFERROR(MAX(E${basIni}:E${basFim}),0)`,S.NUM)]);
+  pt([T('Pendência de prazo',S.ROT),
+      F(`IF(COUNTBLANK(E${basIni}:E${basFim})=0,"Todos os prazos informados","Faltam "&COUNTBLANK(E${basIni}:E${basFim})&" prazo(s) — confirmar com o laboratório")`,S.TXT)]);
+  pt([T('O teste dermatológico só começa depois do time kill: esses dois são sequenciais. Sniff test e apreciabilidade cosmética podem correr em paralelo.',S.NOTA)]);
+  pt([]);
+  pt([T('Teste específico',S.CAB), T('Tipo de produto / aplicação',S.CAB), T('Valor unitário (R$)',S.CAB), T('Custo total (R$)',S.CAB), T('Prazo (dias)',S.CAB)]);
+  const espIni = t.length + 1;
+  [...$('#tEsp tbody').querySelectorAll('tr')].forEach(tr => {
+    const r = t.length + 1;
+    const v = parseFloat(tr.querySelector('.e-valor').value);
+    const pz = parseFloat(tr.querySelector('.e-prazo').value);
+    pt([T(tr.querySelector('.e-nome').value, S.ROT), T(tr.querySelector('.e-tipo').value, S.TXT),
+        isFinite(v) ? N(v,S.INBRL) : V(S.INBRL),
+        F(`IF(C${r}="","",C${r}*$B$${rNvar})`,S.BRL),
+        isFinite(pz) ? N(pz,S.INNUM) : V(S.INNUM)]);
+  });
+  const espFim = t.length;
+  const espSub = pt([T('Subtotal dos testes específicos',S.ROT), null,
+                     F(`SUM(C${espIni}:C${espFim})`,S.BRL), F(`SUM(D${espIni}:D${espFim})`,S.BRL),
+                     F(`SUM(E${espIni}:E${espFim})`,S.NUM)]);
+  const espPar = pt([T('Prazo em cenário paralelo (maior teste específico)',S.ROT), null, null, null,
+                     F(`IFERROR(MAX(E${espIni}:E${espFim}),0)`,S.NUM)]);
+  pt([]);
+  const rTstTot = pt([T('CUSTO TOTAL DO PLANO DE TESTES',S.ROT), F(`D${basSub}+D${espSub}`,S.BRL), null, null,
+                      T('Entra como investimento no Ano 0 da viabilidade.',S.NOTA)]);
+  pt([T('Prazo do plano — cenário sequencial (dias)',S.ROT), F(`E${basSub}+E${espSub}`,S.NUM), null, null,
+      T('Teto: um teste depois do outro.',S.NOTA)]);
+  pt([T('Prazo do plano — cenário paralelo (dias)',S.ROT), F(`MAX(E${basPar},E${espPar})`,S.NUM), null, null,
+      T('Piso: maior teste individual.',S.NOTA)]);
+  pt([T('Custo de testes por variação adicional',S.ROT), F(`C${basSub}+C${espSub}`,S.BRL), null, null,
+      T('Quanto custa levar mais uma fórmula candidata até o fim do plano.',S.NOTA)]);
+  abas.push({nome:'3. Testes', linhas:t, larguras:[46,16,18,18,14,40]});
+
+  /* ----------------------------------------------------- 5. Custos */
+  const c = [];
+  const pc = l => (c.push(l), c.length);
+  pc([T('5 · CUSTO INDUSTRIAL E PRECIFICAÇÃO', S.TIT)]);
+  pc([]);
+  pc([T('Matéria-prima',S.CAB), T('Função / INCI',S.CAB), T('% na fórmula',S.CAB), T('Preço (R$/kg)',S.CAB), T('Custo por kg de massa (R$)',S.CAB)]);
+  const bomIni = c.length + 1;
+  [...$('#tBom tbody').querySelectorAll('tr')].forEach(tr => {
+    const r = c.length + 1;
+    const pcv = parseFloat(tr.querySelector('.b-pct').value);
+    const prv = parseFloat(tr.querySelector('.b-preco').value);
+    pc([T(tr.querySelector('.b-nome').value,S.IN), T(tr.querySelector('.b-inci').value,S.IN),
+        isFinite(pcv) ? N(pcv/100,S.INPCT) : V(S.INPCT),
+        isFinite(prv) ? N(prv,S.INBRL) : V(S.INBRL),
+        F(`IF(OR(C${r}="",D${r}=""),"",C${r}*D${r})`,S.BRL)]);
+  });
+  const bomFim = c.length;
+  const rBomSum = pc([T('Soma da fórmula',S.ROT), null, F(`SUM(C${bomIni}:C${bomFim})`,S.PCT), null, F(`SUM(E${bomIni}:E${bomFim})`,S.BRL)]);
+  pc([T('Validação',S.ROT), null, F(`IF(ABS(C${rBomSum}-1)<0.0001,"OK — fecha 100%","AJUSTAR — não fecha 100%")`,S.TXT)]);
+  pc([]);
+  pc([T('Item',S.CAB), T('Valor',S.CAB), T('Unidade',S.CAB), T('Como é calculado',S.CAB)]);
+  const rGram = pc([T('Gramatura líquida por unidade',S.ROT), N(num('gramatura'),S.INNUM2), T('g ou ml',S.NOTA)]);
+  const rPerda= pc([T('Perda de processo e envase',S.ROT), N(p100('perda'),S.INPCT), T('%',S.NOTA)]);
+  const rCf   = pc([T('Custo da fórmula por unidade',S.ROT), F(`IFERROR(E${rBomSum}*B${rGram}/1000*(1+B${rPerda}),0)`,S.BRL), T('R$/un.',S.NOTA),
+                    T('custo por kg × gramatura ÷ 1000 × (1 + perda)',S.NOTA)]);
+  const rCe   = pc([T('Custo de embalagem por unidade',S.ROT), N(num('custo_emb'),S.INBRL), T('R$/un.',S.NOTA)]);
+  const rCc   = pc([T('Custo de conversão por unidade',S.ROT), N(num('custo_conv'),S.INBRL), T('R$/un.',S.NOTA)]);
+  const rCfr  = pc([T('Frete e armazenagem por unidade',S.ROT), N(num('custo_frete'),S.INBRL), T('R$/un.',S.NOTA)]);
+  const rCpv  = pc([T('CUSTO INDUSTRIAL TOTAL (CPV unitário)',S.ROT), F(`B${rCf}+B${rCe}+B${rCc}+B${rCfr}`,S.BRL), T('R$/un.',S.NOTA),
+                    T('fórmula + embalagem + conversão + frete',S.NOTA)]);
+  pc([]);
+  const rGond = pc([T('Preço-alvo de gôndola',S.ROT), N(num('preco_gondola'),S.INBRL), T('R$/un.',S.NOTA)]);
+  const rMkv  = pc([T('Margem do varejo sobre o preço de fábrica',S.ROT), N(p100('markup_varejo'),S.INPCT), T('%',S.NOTA)]);
+  const rPf   = pc([T('Preço de fábrica implícito',S.ROT), F(`IFERROR(B${rGond}/(1+B${rMkv}),0)`,S.BRL), T('R$/un.',S.NOTA), T('gôndola ÷ (1 + margem do varejo)',S.NOTA)]);
+  const rImp  = pc([T('Carga tributária sobre faturamento',S.ROT), N(p100('impostos'),S.INPCT), T('%',S.NOTA)]);
+  const rDesc = pc([T('Descontos e verbas comerciais',S.ROT), N(p100('descontos'),S.INPCT), T('%',S.NOTA)]);
+  const rRl   = pc([T('Receita líquida por unidade',S.ROT), F(`IFERROR(B${rPf}*(1-B${rImp}-B${rDesc}),0)`,S.BRL), T('R$/un.',S.NOTA),
+                    T('preço de fábrica × (1 − impostos − descontos)',S.NOTA)]);
+  const rMc   = pc([T('Margem de contribuição por unidade',S.ROT), F(`B${rRl}-B${rCpv}`,S.BRL), T('R$/un.',S.NOTA), T('receita líquida − CPV',S.NOTA)]);
+  const rMcP  = pc([T('Margem de contribuição (%)',S.ROT), F(`IF(B${rRl}=0,0,B${rMc}/B${rRl})`,S.PCT), T('%',S.NOTA), T('MC ÷ receita líquida',S.NOTA)]);
+  const rMkup = pc([T('Markup sobre o custo industrial',S.ROT), F(`IF(B${rCpv}=0,0,B${rPf}/B${rCpv})`,S.NUM2), T('x',S.NOTA), T('preço de fábrica ÷ CPV',S.NOTA)]);
+  const rAlvo = pc([T('Margem de contribuição-alvo',S.ROT), N(p100('mc_alvo'),S.INPCT), T('%',S.NOTA), T('Definida no briefing (campo 1.3).',S.NOTA)]);
+  const rPfMin= pc([T('Preço de fábrica mínimo para a margem-alvo',S.ROT),
+                    F(`IFERROR(B${rCpv}/((1-B${rAlvo})*(1-B${rImp}-B${rDesc})),0)`,S.BRL), T('R$/un.',S.NOTA),
+                    T('CPV ÷ [(1 − MC alvo) × (1 − impostos − descontos)]',S.NOTA)]);
+  pc([T('Preço de gôndola mínimo para a margem-alvo',S.ROT), F(`IFERROR(B${rPfMin}*(1+B${rMkv}),0)`,S.BRL), T('R$/un.',S.NOTA),
+      T('preço de fábrica mínimo × (1 + margem do varejo)',S.NOTA)]);
+  const rVer  = pc([T('Veredito de precificação',S.ROT),
+      F(`IF(B${rRl}=0,"Preencha as premissas",IF(B${rMcP}>=B${rAlvo},"APROVADO — margem acima do alvo",IF(B${rMcP}>=B${rAlvo}*0.9,"ATENÇÃO — até 10% abaixo do alvo","REPROVADO — margem insuficiente")))`,S.TXT)]);
+  pc([]);
+  const rFix  = pc([T('Custos fixos incrementais mensais',S.ROT), N(num('fixos'),S.INBRL), T('R$/mês',S.NOTA)]);
+  const rMkt  = pc([T('Investimento de marketing mensal',S.ROT), N(num('mkt_mes'),S.INBRL), T('R$/mês',S.NOTA)]);
+  const rBe   = pc([T('Volume mensal de equilíbrio',S.ROT), F(`IF(B${rMc}<=0,0,(B${rFix}+B${rMkt})/B${rMc})`,S.NUM), T('un./mês',S.NOTA),
+                    T('(fixos + marketing) ÷ MC unitária',S.NOTA)]);
+  abas.push({nome:'5. Custos', linhas:c, larguras:[44,26,16,18,26]});
+
+  /* -------------------------------------------------- 7. Scorecard */
+  const s = [];
+  const ps = l => (s.push(l), s.length);
+  ps([T('7 · SCORECARD DE PRIORIZAÇÃO', S.TIT)]);
+  ps([]);
+  ps([T('Critério',S.CAB), T('Peso',S.CAB), T('Nota (1-5)',S.CAB), T('Ponderado',S.CAB)]);
+  const scIni = s.length + 1;
+  [...$('#tScore tbody').querySelectorAll('tr')].forEach((tr, i) => {
+    const r = s.length + 1;
+    const pz = parseFloat(tr.querySelector('.sc-peso').value);
+    const nt = parseFloat(tr.querySelector('.sc-nota').value);
+    ps([T(CRITERIOS[i][0],S.ROT), N(isFinite(pz)?pz/100:0, S.INPCT),
+        isFinite(nt) ? N(nt,S.INNUM) : V(S.INNUM),
+        F(`IF(C${r}="","",B${r}*C${r})`,S.NUM2)]);
+  });
+  const scFim = s.length;
+  const rScPeso = ps([T('Soma dos pesos',S.ROT), F(`SUM(B${scIni}:B${scFim})`,S.PCT), null,
+                      F(`IF(ABS(B${scFim+1}-1)<0.0001,"OK — pesos somam 100%","AJUSTAR — os pesos precisam somar 100%")`,S.TXT)]);
+  const rScTot = ps([T('SCORE PONDERADO (1 a 5)',S.ROT), null, F(`COUNT(C${scIni}:C${scFim})`,S.NUM),
+                     F(`IFERROR(SUMPRODUCT(B${scIni}:B${scFim},C${scIni}:C${scFim}),0)`,S.NUM2)]);
+  ps([T('CLASSIFICAÇÃO',S.ROT),
+      F(`IF(COUNT(C${scIni}:C${scFim})<10,"Incompleto — pontue todos os critérios",IF(D${rScTot}>=4,"PRIORIDADE MÁXIMA — entra na fila agora",IF(D${rScTot}>=3.2,"APROVADO — entra na fila conforme capacidade",IF(D${rScTot}>=2.5,"REVISAR — reformular conceito, custo ou escopo","DESCARTAR — não justifica o esforço"))))`,S.TXT)]);
+  abas.push({nome:'7. Scorecard', linhas:s, larguras:[56,14,14,16]});
+
+  /* --------------------------------------------------- 1. Briefing */
+  const b = [];
+  const pb = l => (b.push(l), b.length);
+  pb([T('1 · BRIEFING DE DESENVOLVIMENTO DE PRODUTO — HPPC · LEITE DE ROSAS', S.TIT)]);
+  pb([T('Gerado pelo formulário em ' + new Date().toLocaleString('pt-BR'), S.NOTA)]);
+  pb([]);
+  for(const sec of SECOES){
+    if(sec.id === 'mercado' || sec.id === 'custos') continue;
+    pb([T(sec.t, S.CAB), T('', S.CAB), T('', S.CAB)]);
+    for(const f of sec.f){
+      const v = val(f.k);
+      pb([T(f.l, S.ROT), f.tp === 'number' && v !== '' ? N(parseFloat(v), S.IN) : T(v, S.IN)]);
+    }
+    pb([]);
+  }
+  pb([T('PAINEL CONSOLIDADO — CALCULADO PELAS DEMAIS ABAS', S.CAB), T('', S.CAB), T('', S.CAB)]);
+  [
+    ['SOM — receita capturável no Ano 1', `'2. Mercado'!B${rSom}`, S.BRL, 'Aba 2'],
+    ['Custo industrial unitário (CPV)',   `'5. Custos'!B${rCpv}`,  S.BRL, 'Aba 5'],
+    ['Preço de fábrica implícito',        `'5. Custos'!B${rPf}`,   S.BRL, 'Aba 5'],
+    ['Margem de contribuição (%)',        `'5. Custos'!B${rMcP}`,  S.PCT, 'Aba 5'],
+    ['Veredito de precificação',          `'5. Custos'!B${rVer}`,  S.TXT, 'Aba 5'],
+    ['Volume mensal de equilíbrio',       `'5. Custos'!B${rBe}`,   S.NUM, 'Aba 5'],
+    ['Custo total do plano de testes',    `'3. Testes'!B${rTstTot}`, S.BRL, 'Aba 3'],
+    ['Score de priorização',              `'7. Scorecard'!D${rScTot}`, S.NUM2, 'Aba 7'],
+    ['Classificação do projeto',          `'7. Scorecard'!B${rScTot+1}`, S.TXT, 'Aba 7'],
+  ].forEach(([rot, ref, est, origem]) => pb([T(rot, S.ROT), F(ref, est), T(origem, S.NOTA)]));
+  pb([]);
+  pb([T('Este arquivo é a base do projeto. Para viabilidade em 3 anos, cronograma, riscos e checklist de gate, use o modelo completo briefing_hppc_leite_de_rosas.xlsx.', S.NOTA)]);
+  abas.unshift({nome:'1. Briefing', linhas:b, larguras:[46,60,22]});
+
+  baixar(montarXlsx(abas), nomeArquivo('xlsx'));
+}
+
+/* ------------------------------------------------------------- boot */
+document.querySelectorAll('[data-k]').forEach(el => {
+  el.addEventListener('input', calcular);
+  el.addEventListener('change', calcular);
+});
+try{
+  const salvo = localStorage.getItem('lr_briefing_hppc');
+  if(salvo) aplicar(JSON.parse(salvo)); else calcular();
+}catch(e){ calcular(); }
+</script>
+</body>
+</html>
