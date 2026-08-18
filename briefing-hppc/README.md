@@ -5,10 +5,10 @@ perfumaria e cosméticos, com processo Stage-Gate e números que se recalculam s
 
 | Arquivo | O que é |
 |---|---|
-| `briefing_hppc_leite_de_rosas.xlsx` | **O modelo completo.** 11 abas, 288 fórmulas, do BOM ao VPL. |
+| `briefing_hppc_leite_de_rosas.xlsx` | **O modelo completo.** 11 abas, 462 fórmulas, da matéria-prima ao VPL. |
 | `form-briefing-hppc.html` | **O formulário.** Abre no navegador, calcula ao vivo e exporta um XLSX-base com fórmulas. |
 | `gerar_briefing_xlsx.py` | Gera o modelo completo. Rode para versionar mudanças de estrutura. |
-| `testar_modelo.py` | Teste de ponta a ponta: preenche um cenário, recalcula e confere 24 resultados contra o valor esperado. |
+| `testar_modelo.py` | Teste de ponta a ponta: preenche um cenário, recalcula e confere 35 resultados contra o valor esperado. |
 
 ## O modelo completo (XLSX)
 
@@ -18,19 +18,55 @@ perfumaria e cosméticos, com processo Stage-Gate e números que se recalculam s
 | 1. Briefing | O formulário em si (8 blocos) + painel consolidado que puxa todas as outras abas |
 | 2. Mercado | TAM · SAM · SOM bottom-up, benchmark de PDV com preço por 100 ml/g, leitura competitiva |
 | 3. Formulação | Especificação técnica, trilha regulatória, catálogo de testes básicos e específicos |
-| 4. Embalagem | Estrutura e custo por unidade, ferramental, rotulagem obrigatória, dados logísticos |
-| 5. Custos | BOM da fórmula, custo industrial, precificação, ponto de equilíbrio, sensibilidade |
+| 4. Embalagem | Especificação, fornecedor, MOQ, lead time, ferramental, rotulagem obrigatória e dados logísticos |
+| 5. Custos | **Ficha de custo completa**: 5 grupos de custo, impostos de venda, margem bruta, preço reverso e sensibilidade |
 | 6. Viabilidade | DRE incremental de 3 anos, investimento, fluxo de caixa, VPL, TIR, payback, ROI |
 | 7. Scorecard | 10 critérios ponderados, classificação automática, ranking contra a fila de projetos |
 | 8. Cronograma | 16 fases Stage-Gate com datas encadeadas e data prevista de gôndola |
 | 9. Riscos | Probabilidade × impacto, severidade, nível e controle de mitigações sem dono |
 | 10. Aprovação | Checklist de 22 itens por gate, síntese de uma página e registro de decisão |
 
-**Cadeia de cálculo:** o custo de embalagem (aba 4) e o BOM (aba 5) formam o CPV; o CPV
-define margem e preço mínimo; volume × preço alimentam a viabilidade (aba 6); ferramental,
-regulatório e plano de testes viram o investimento do Ano 0; margem, VPL e payback voltam
-para o Scorecard (aba 7) e para a síntese do comitê (aba 10). Mudar um insumo no BOM
-reprecifica o projeto inteiro.
+**Cadeia de cálculo:** os cinco grupos de custo da aba 5 formam o CPV; o CPV define margem bruta e
+preço mínimo; volume × preço alimentam a viabilidade (aba 6); ferramental, regulatório e plano de
+testes viram o investimento do Ano 0; margem, VPL e payback voltam para o Scorecard (aba 7) e para a
+síntese do comitê (aba 10). Mudar o preço de um insumo reprecifica o projeto inteiro, até o veredito
+do gate.
+
+### A ficha de custo (aba 5)
+
+A aba de custo é a peça central. Ela é montada em cinco grupos, cada um com o seu detalhamento:
+
+| Grupo | O que entra | Como é calculado |
+|---|---|---|
+| 1 · Matérias-primas da formulação | Insumo a insumo, com % na fórmula, preço por kg, frete de entrada, impostos recuperáveis e perda específica | preço líquido × % × gramatura efetiva ÷ 1000, corrigido pelas perdas |
+| 2 · Embalagem | Primária, secundária e terciária, com origem **comprada pronta** ou **transformada internamente** | preço líquido × quantidade por unidade ÷ (1 − refugo) |
+| 3 · Mão de obra direta | Só quem põe a mão no produto, com fator de encargos e horas produtivas | custo-hora × horas do lote ÷ unidades do lote |
+| 4 · Gastos gerais de fabricação | Depreciação, manutenção, energia, utilidades, efluentes, supervisão, laboratório, almoxarifado, limpeza, EPI, ocupação | GGF mensal ÷ horas produtivas = taxa/hora, aplicada às horas do lote |
+| 5 · Outros custos de produção | Análises por lote, amostras de retenção, ferramental, royalties, toll, obsolescência, custo financeiro do estoque | forma de cálculo própria por linha |
+
+Quem transforma a própria embalagem tem uma calculadora dedicada (bloco 5.4): peso da peça, preço da
+resina, masterbatch, refugo de transformação, cavidades, tempo de ciclo, hora-máquina e amortização do
+molde saem em custo por peça, que volta para a linha do componente.
+
+**Parâmetros que mudam tudo** (bloco 5.1): gramatura declarada, sobre-enchimento, perda de granel,
+tamanho do lote, velocidade da linha e horas de setup. Sem lote definido, o rateio de MOD e GGF é chute.
+
+### Impostos de venda e preço de prateleira (blocos 5.9 e 5.10)
+
+Dois comportamentos diferentes, e a planilha trata cada um como é:
+
+- **Por fora** — IPI e ICMS-ST (com MVA/IVA-ST). Entram na nota, o cliente paga, mas não são receita.
+  São eles que explicam por que o produto chega caro na gôndola.
+- **Por dentro** — ICMS próprio, PIS e COFINS. Já estão no preço de tabela e saem como dedução.
+
+A cascata é: preço de tabela → + IPI → + ICMS-ST → **valor total na nota** (o custo de aquisição do
+varejo) · e, do outro lado, preço de tabela → − ICMS, PIS, COFINS e descontos → **receita líquida** →
+− CPV → **margem bruta** → − comissão, frete e verba → **margem de contribuição**.
+
+O bloco 5.10 faz o caminho inverso: parte do preço de prateleira alvo, tira o markup do varejo, desfaz
+IPI e ST pelo fator de conversão e mostra o **preço de tabela implícito** — o teto que cabe na prateleira.
+Em seguida calcula o **preço de tabela mínimo** e o **preço de prateleira mínimo** para a margem-alvo do
+briefing, e dá o veredito.
 
 **Convenção de cores:** fundo amarelo com fonte azul = célula de entrada; fonte preta =
 fórmula da própria aba; fonte verde = fórmula que puxa outra aba.
@@ -39,9 +75,11 @@ fórmula da própria aba; fonte verde = fórmula que puxa outra aba.
 
 Arquivo único, sem dependências e sem internet. Abra com duplo clique.
 
-- Calcula ao vivo CPV, preço de fábrica, margem, ponto de equilíbrio, SOM e score.
+- Calcula ao vivo os cinco grupos de custo, o CPV, IPI e ICMS-ST, margem bruta e de contribuição,
+  preço de tabela mínimo, preço de prateleira mínimo, ponto de equilíbrio, SOM e score.
 - **Exporta XLSX** com 5 abas (Briefing, Mercado, Testes, Custos, Scorecard) já com as
   fórmulas vivas — o gerador de XLSX (ZIP + SpreadsheetML) está escrito dentro do HTML.
+  A aba de custo exportada traz os cinco grupos, os impostos de venda e o preço reverso.
 - Salva rascunho automaticamente no navegador; exporta e importa `.json`.
 - Imprime em papel ou PDF pelo próprio navegador.
 
@@ -72,13 +110,23 @@ em cenário paralelo (piso).
 Os testes específicos por tipo de produto (talcos, desodorante líquido, aerossol, sabonetes)
 vêm listados com valor e prazo em branco, para preenchimento por projeto.
 
+## O que costuma ficar de fora de um custeio
+
+A aba 0 traz esta lista completa, com o bloco da planilha onde cada item entra. Os que mais somem:
+
+impostos recuperáveis na compra · frete de entrada · sobre-enchimento · perdas e refugo por etapa ·
+setup e limpeza entre lotes · tamanho do lote · análises de QC por lote · amostras de retenção ·
+amortização de ferramental · obsolescência de embalagem por troca de arte · custo financeiro do estoque ·
+royalties · dupla contagem quando há toll · utilidades e efluentes · capital de giro travado no MOQ ·
+IPI e ICMS-ST · verbas, bonificação e devolução · comissão e frete de saída · diferença de alíquota por estado.
+
 ## Como rodar
 
 ```bash
 pip install openpyxl
 python3 gerar_briefing_xlsx.py                                            # gera o modelo
 python3 <caminho>/xlsx/scripts/recalc.py briefing_hppc_leite_de_rosas.xlsx 380   # calcula as fórmulas
-python3 testar_modelo.py                                                  # 24 verificações numéricas
+python3 testar_modelo.py                                                  # 35 verificações numéricas
 ```
 
 O gerador escreve fórmulas sem valores em cache: **sempre recalcule** (LibreOffice, ou uma

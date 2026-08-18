@@ -228,6 +228,36 @@ for i, (t, d) in enumerate(contexto, start=1):
     r += 1
 
 r += 1
+r = secao(ws, r, "O QUE COMPÕE O CUSTO — E O QUE COSTUMA FICAR DE FORA", 3)
+r = cabecalho(ws, r, ["#", "Item", "Onde entra"])
+esquecidos = [
+    ("Impostos recuperáveis na compra", "O custo de uma matéria-prima é o preço da nota MENOS os créditos que a empresa aproveita. Usar o preço cheio infla o custo e mata projeto bom.", "Aba 5 · colunas de imposto recuperável"),
+    ("Frete de entrada e seguro sobre a compra", "Insumo importado ou de outro estado chega mais caro do que o preço de tabela do fornecedor.", "Aba 5 · colunas de frete inbound"),
+    ("Sobre-enchimento", "Encher 202 g para declarar 200 g é 1% de matéria-prima doada em todo lote.", "Aba 5 · bloco 5.1"),
+    ("Perdas e refugo por etapa", "Pesagem, fabricação, envase, encaixotamento e refugo de embalagem. Cada etapa come um pedaço.", "Aba 5 · blocos 5.1, 5.2 e 5.3"),
+    ("Setup, limpeza e troca de lote", "Higienização entre lotes é obrigatória em cosmético e em lote pequeno chega a custar mais que a produção.", "Aba 5 · bloco 5.1"),
+    ("Tamanho do lote", "MOD e GGF são rateados por hora ocupada. Sem definir o lote, o custo unitário é chute.", "Aba 5 · bloco 5.1"),
+    ("Análises de qualidade por lote e amostras de retenção", "Custo por lote e produto que sai do estoque sem virar venda.", "Aba 5 · bloco 5.7"),
+    ("Amortização de ferramental e moldes", "Investimento diluído nas unidades que o molde vai produzir.", "Aba 5 · bloco 5.7"),
+    ("Obsolescência e validade", "Embalagem encalhada por troca de arte e granel vencido.", "Aba 5 · bloco 5.7"),
+    ("Custo financeiro do estoque", "Dinheiro parado em matéria-prima e produto acabado tem custo, ainda mais com caixa curto.", "Aba 5 · bloco 5.7"),
+    ("Royalties e licenciamento", "Marca licenciada, personagem, fragrância exclusiva.", "Aba 5 · bloco 5.7"),
+    ("Terceirização por toll", "A taxa do terceirista já embute MOD e GGF. Somar os dois é contar duas vezes.", "Aba 5 · bloco 5.7"),
+    ("Utilidades e efluentes", "Água purificada, vapor, ar comprimido e tratamento de efluente são caros em linha de cosmético.", "Aba 5 · bloco 5.6"),
+    ("Capital de giro travado no lote mínimo", "O MOQ do fornecedor de embalagem costuma pesar mais no caixa do que o próprio ferramental.", "Aba 4 e aba 6"),
+    ("IPI e ICMS-ST", "São por fora: não entram na receita, mas inflam o preço na nota e definem o preço de prateleira.", "Aba 5 · bloco 5.9"),
+    ("Verbas, bonificação e devolução", "Deduzem receita sem aparecer no preço de tabela. É o vazamento invisível da margem.", "Aba 5 · bloco 5.9"),
+    ("Comissão e frete de saída", "Despesa variável de venda: entra depois da margem bruta, na margem de contribuição.", "Aba 5 · bloco 5.9"),
+    ("Diferença de alíquota por estado", "O mesmo produto tem margem diferente por UF. Rode a aba 5 uma vez por estado relevante.", "Aba 5 · bloco 5.9"),
+]
+for i, (item, porque, onde) in enumerate(esquecidos, start=1):
+    txt(ws, r, 1, i, font=f_label)
+    txt(ws, r, 2, item, font=f_label)
+    c = txt(ws, r, 3, porque + "  →  " + onde)
+    ws.row_dimensions[r].height = 34
+    r += 1
+
+r += 1
 r = secao(ws, r, "PREMISSAS E FONTES", 3)
 r = cabecalho(ws, r, ["#", "Item", "Origem / observação"])
 fontes = [
@@ -742,10 +772,16 @@ wse, r = nova_aba(
     "O custo unitário lançado aqui alimenta automaticamente o BOM da aba 5. O ferramental alimenta o investimento da aba 6.",
 )
 
-r = secao(wse, r, "4.1 ESTRUTURA DE EMBALAGEM E CUSTO POR UNIDADE", 9)
+r = secao(wse, r, "4.1 ESTRUTURA DE EMBALAGEM, FORNECIMENTO E FERRAMENTAL", 9)
+wse.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9)
+txt(wse, r, 1,
+    "Esta aba trata de especificação, fornecedor, lote mínimo, prazo e ferramental. "
+    "O custo por componente é lançado na aba 5 (bloco 5.3), que é a fonte única de custo — aqui o total aparece apenas como consulta.",
+    font=f_nota)
+r += 1
 r = cabecalho(wse, r, [
     "Componente", "Material", "Especificação", "Fornecedor", "MOQ (un.)",
-    "Lead time (dias)", "Custo unit. (R$)", "Ferramental / capex (R$)", "Un. por caixa",
+    "Lead time (dias)", "Nível na embalagem", "Ferramental / capex (R$)", "Un. por caixa",
 ])
 EMB_INI = r
 componentes = [
@@ -765,7 +801,7 @@ for comp, spec in componentes:
     inp(wse, r, 4)
     inp(wse, r, 5, fmt=FMT_NUM)
     inp(wse, r, 6, fmt=FMT_NUM)
-    inp(wse, r, 7, fmt=FMT_BRL)
+    inp(wse, r, 7)
     inp(wse, r, 8, fmt=FMT_BRL0)
     inp(wse, r, 9, fmt=FMT_NUM)
     wse.row_dimensions[r].height = 24
@@ -773,10 +809,10 @@ for comp, spec in componentes:
 EMB_FIM = r - 1
 
 L_EMB_CUSTO = r
-txt(wse, r, 1, "Custo de embalagem por unidade", font=f_label, fill=fill_cinza)
+txt(wse, r, 1, "Custo de embalagem por unidade (calculado na aba 5)", font=f_label, fill=fill_cinza)
 for c in range(2, 7):
     txt(wse, r, c, "", fill=fill_cinza)
-calc(wse, r, 7, f"=SUM(G{EMB_INI}:G{EMB_FIM})", FMT_BRL)
+# formula escrita no fim do script, quando a aba 5 ja existe
 L_EMB_CAPEX = r
 calc(wse, r, 8, f"=SUM(H{EMB_INI}:H{EMB_FIM})", FMT_BRL0)
 txt(wse, r, 9, "", fill=fill_cinza)
@@ -877,197 +913,678 @@ txt(wse, r, 4, "Calculado: caixas por palete × unidades por caixa.", font=f_not
 
 # =============================================== 5. CUSTOS E PRECIFICACAO
 wsc, r = nova_aba(
-    "5. Custos", [36, 26, 14, 16, 20, 20, 34],
-    "5 · CUSTO INDUSTRIAL E PRECIFICAÇÃO",
-    "Do BOM ao preço de gôndola. Toda célula preta é fórmula — mexer nelas quebra a cadeia de cálculo até a aba 6.",
+    "5. Custos", [40, 22, 13, 11, 15, 13, 15, 16, 12, 18, 12, 40],
+    "5 · FICHA DE CUSTO DO PRODUTO E FORMAÇÃO DE PREÇO",
+    "Quatro grupos de custo (fórmula · embalagem · MOD · GGF) mais outros custos de produção, depois impostos de venda e margem bruta.",
 )
+NC = 12
 
-r = secao(wsc, r, "5.1 BOM DA FÓRMULA (BASE 100% DA MASSA)", 7)
+
+def par(ws, linha, rot, valor, unidade, fmt, nota, link=False, ncols=NC, destaque=False):
+    """Linha de parâmetro: A rótulo · B valor · C unidade · D..L comentário."""
+    fill = PatternFill("solid", fgColor=ROSA_CLARO) if destaque else fill_claro
+    c = txt(ws, linha, 1, rot, font=f_label, fill=fill)
+    if destaque:
+        c.font = Font(name=FONTE, size=10, bold=True, color=ROSA_ESCURO)
+    if isinstance(valor, str) and valor.startswith("="):
+        calc(ws, linha, 2, valor, fmt, link=link)
+    else:
+        inp(ws, linha, 2, valor, fmt)
+    txt(ws, linha, 3, unidade, font=f_nota)
+    ws.merge_cells(start_row=linha, start_column=4, end_row=linha, end_column=ncols)
+    txt(ws, linha, 4, nota, font=f_nota)
+    ws.row_dimensions[linha].height = 24
+    return linha + 1
+
+
+def nota_larga(ws, linha, texto, altura=1, ncols=NC):
+    ws.merge_cells(start_row=linha, start_column=1, end_row=linha + altura - 1, end_column=ncols)
+    c = txt(ws, linha, 1, texto, font=f_nota)
+    c.alignment = Alignment(vertical="top", wrap_text=True)
+    ws.row_dimensions[linha].height = 16
+    return linha + altura
+
+
+def rodape(ws, linha, rotulo, formulas, ncols=NC):
+    """Linha de subtotal cinza. formulas: dict coluna -> (formula, fmt)."""
+    txt(ws, linha, 1, rotulo, font=f_label, fill=fill_cinza)
+    for col in range(2, ncols + 1):
+        if col in formulas:
+            f, fmt = formulas[col]
+            calc(ws, linha, col, f, fmt)
+        else:
+            txt(ws, linha, col, "", fill=fill_cinza)
+    return linha + 1
+
+
+# ------------------------------------------- 5.1 parametros da unidade
+r = secao(wsc, r, "5.1 PARÂMETROS DA UNIDADE E DO LOTE", NC)
+r = cabecalho(wsc, r, ["Parâmetro", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+L_GRAM = r
+r = par(wsc, r, "Gramatura declarada no rótulo", None, "g ou ml", FMT_NUM2,
+        "Conteúdo nominal. É o que o consumidor lê e o que a fiscalização cobra.")
+L_OVER = r
+r = par(wsc, r, "Sobre-enchimento médio", 0.01, "%", FMT_PCT,
+        "Quanto se enche a mais para nunca ficar abaixo do nominal. Encher 202 g para declarar 200 g é custo puro e quase sempre esquecido.")
+L_GRAMEF = r
+r = par(wsc, r, "Gramatura efetiva envasada", f"=IFERROR(B{L_GRAM}*(1+B{L_OVER}),0)", "g ou ml", FMT_NUM2,
+        "Calculado: gramatura declarada × (1 + sobre-enchimento). É esta que consome matéria-prima.")
+L_PERDAGR = r
+r = par(wsc, r, "Perda de granel no processo e no envase", 0.02, "%", FMT_PCT,
+        "Resíduo de tanque, tubulação, purga de linha e reprocesso descartado.")
+L_LOTE = r
+r = par(wsc, r, "Tamanho do lote de produção", None, "un.", FMT_NUM,
+        "O custo unitário muda com o lote. Sem definir o lote, o custeio de MOD e GGF é ficção.")
+L_VEL = r
+r = par(wsc, r, "Velocidade da linha", None, "un./h", FMT_NUM,
+        "Produção efetiva por hora, já considerando as paradas normais.")
+L_HPROD = r
+r = par(wsc, r, "Horas de produção do lote", f"=IFERROR(B{L_LOTE}/B{L_VEL},0)", "h", FMT_NUM2,
+        "Calculado: lote ÷ velocidade.")
+L_HSETUP = r
+r = par(wsc, r, "Horas de setup, limpeza e troca de lote", None, "h", FMT_NUM2,
+        "Higienização entre lotes é obrigatória em cosmético e costuma pesar mais que a própria produção em lote pequeno.")
+L_HTOT = r
+r = par(wsc, r, "Horas totais ocupadas pelo lote", f"=B{L_HPROD}+B{L_HSETUP}", "h", FMT_NUM2,
+        "Calculado: produção + setup. É esta hora que MOD e GGF cobram.")
+r += 1
+
+# -------------------------------------- 5.2 grupo 1: MP da formulacao
+r = secao(wsc, r, "5.2 GRUPO 1 — MATÉRIAS-PRIMAS DA FORMULAÇÃO", NC)
+r = nota_larga(wsc, r,
+    "O custo da matéria-prima é o preço posto na fábrica MENOS os impostos que a empresa recupera na compra. "
+    "Lançar o preço da nota cheio superestima o custo e faz o produto parecer menos rentável do que é. "
+    "Confirme com a Contabilidade quais créditos o regime tributário da empresa aproveita.")
 r = cabecalho(wsc, r, [
-    "Matéria-prima", "Função / INCI", "% na fórmula", "Preço (R$/kg)",
-    "Custo por kg de massa (R$)", "Fornecedor", "Observação",
+    "Matéria-prima", "Função / INCI", "% na fórmula", "Unidade", "Preço bruto (R$/kg)",
+    "Frete inbound (R$/kg)", "Impostos recuperáveis (%)", "Custo líquido (R$/kg)",
+    "Perda específica (%)", "Custo por unidade (R$)", "% do custo", "Fornecedor / observação",
 ])
-BOM_INI = r
-BOM_FIM = r + 13
-for i in range(BOM_INI, BOM_FIM + 1):
-    if i == BOM_INI:
-        inp(wsc, i, 1, "[EXEMPLO — apagar] Água")
+MP_INI = r
+MP_FIM = r + 13
+for i in range(MP_INI, MP_FIM + 1):
+    if i == MP_INI:
+        inp(wsc, i, 1, "[EXEMPLO — apagar] Água purificada")
         inp(wsc, i, 2, "Aqua — veículo")
         inp(wsc, i, 3, 0.70, FMT_PCT)
-        inp(wsc, i, 4, 0.02, FMT_BRL)
+        inp(wsc, i, 5, 0.02, FMT_BRL)
     else:
-        inp(wsc, i, 1)
-        inp(wsc, i, 2)
+        inp(wsc, i, 1); inp(wsc, i, 2)
         inp(wsc, i, 3, fmt=FMT_PCT)
-        inp(wsc, i, 4, fmt=FMT_BRL)
-    calc(wsc, i, 5, f'=IF(OR(C{i}="",D{i}=""),"",C{i}*D{i})', FMT_BRL)
-    inp(wsc, i, 6)
-    inp(wsc, i, 7)
+        inp(wsc, i, 5, fmt=FMT_BRL)
+    inp(wsc, i, 4, "kg")
+    inp(wsc, i, 6, fmt=FMT_BRL)
+    inp(wsc, i, 7, fmt=FMT_PCT)
+    calc(wsc, i, 8, f'=IF(E{i}="","",(E{i}+F{i})*(1-G{i}))', FMT_BRL)
+    inp(wsc, i, 9, fmt=FMT_PCT)
+    calc(wsc, i, 10,
+         f'=IF(OR(C{i}="",E{i}=""),"",IFERROR(H{i}*C{i}*$B${L_GRAMEF}/1000/(1-$B${L_PERDAGR})/(1-I{i}),""))', FMT_BRL)
+    inp(wsc, i, 12)
     wsc.row_dimensions[i].height = 22
-r = BOM_FIM + 1
-
-L_BOM_PCT = r
-txt(wsc, r, 1, "Soma da fórmula", font=f_label, fill=fill_cinza)
-txt(wsc, r, 2, "", fill=fill_cinza)
-calc(wsc, r, 3, f"=SUM(C{BOM_INI}:C{BOM_FIM})", FMT_PCT)
-txt(wsc, r, 4, "", fill=fill_cinza)
-L_BOM_KG = r
-calc(wsc, r, 5, f"=SUM(E{BOM_INI}:E{BOM_FIM})", FMT_BRL)
-txt(wsc, r, 6, "", fill=fill_cinza)
-txt(wsc, r, 7, "Custo de 1 kg de massa pronta.", font=f_nota)
+r = MP_FIM + 1
+L_MP_SUB = r
+r = rodape(wsc, r, "Subtotal · matérias-primas da formulação", {
+    3: (f"=SUM(C{MP_INI}:C{MP_FIM})", FMT_PCT),
+    10: (f"=SUM(J{MP_INI}:J{MP_FIM})", FMT_BRL),
+})
+L_MP_CHK = r
+r = rodape(wsc, r, "Validação do fechamento da fórmula", {
+    3: (f'=IF(ABS(C{L_MP_SUB}-1)<0.0001,"OK — 100%","AJUSTAR")', None),
+})
+r = nota_larga(wsc, r, "Enquanto a soma dos percentuais não fechar 100%, o custo por quilo de granel está errado.")
 r += 1
-txt(wsc, r, 1, "Validação do fechamento da fórmula", font=f_label, fill=fill_cinza)
-txt(wsc, r, 2, "", fill=fill_cinza)
-calc(wsc, r, 3, f'=IF(ABS(C{L_BOM_PCT}-1)<0.0001,"OK — fecha 100%","AJUSTAR — não fecha 100%")')
-txt(wsc, r, 4, "", fill=fill_cinza)
-txt(wsc, r, 5, "", fill=fill_cinza)
-txt(wsc, r, 6, "", fill=fill_cinza)
-txt(wsc, r, 7, "Enquanto não fechar 100%, o custo por kg está subestimado ou superestimado.", font=f_nota)
-r += 2
 
-
-def bloco(ws, linha, titulo, itens, ncols=7):
-    """itens: (rotulo, formula|None, unidade, formato, nota, link)"""
-    linha = secao(ws, linha, titulo, ncols)
-    linha = cabecalho(ws, linha, ["Item", "Valor", "Unidade", "Comentário", "", "", ""])
-    refs = {}
-    for chave, rot, form, uni, fmt, nota, is_link in itens:
-        txt(ws, linha, 1, rot, font=f_label, fill=fill_claro)
-        if form is None:
-            inp(ws, linha, 2, None, fmt)
-        else:
-            calc(ws, linha, 2, form, fmt, link=is_link)
-        txt(ws, linha, 3, uni, font=f_nota)
-        ws.merge_cells(start_row=linha, start_column=4, end_row=linha, end_column=ncols)
-        txt(ws, linha, 4, nota, font=f_nota)
-        ws.row_dimensions[linha].height = 24
-        refs[chave] = linha
-        linha += 1
-    return linha + 1, refs
-
-
-# --------------------------------------------------- 5.2 custo industrial
-base = r
-K = {}
-itens_custo = [
-    ("gram",   "Gramatura líquida por unidade",            None, "g ou ml", FMT_NUM2, "Conteúdo declarado no rótulo.", False),
-    ("perda",  "Perda de processo e envase",               None, "%",       FMT_PCT,  "Quebra, sobre-enchimento e resíduo de linha. Se não medir, use o histórico da linha.", False),
-    ("cf",     "Custo da fórmula por unidade",             None, "R$/un.",  FMT_BRL,  "", False),
-    ("ce",     "Custo de embalagem por unidade",           None, "R$/un.",  FMT_BRL,  "", False),
-    ("conv",   "Custo de conversão por unidade",           None, "R$/un.",  FMT_BRL,  "Mão de obra direta, energia e overhead de linha. Se for terceirizado, use a taxa do co-packer.", False),
-    ("frete",  "Frete e armazenagem por unidade",          None, "R$/un.",  FMT_BRL,  "Custo logístico até o cliente, se for por nossa conta.", False),
-    ("cpv",    "CUSTO INDUSTRIAL TOTAL (CPV unitário)",    None, "R$/un.",  FMT_BRL,  "", False),
-]
-r, K = bloco(wsc, r, "5.2 CUSTO INDUSTRIAL UNITÁRIO", itens_custo)
-
-calc(wsc, K["cf"], 2,
-     f"=IFERROR(E{L_BOM_KG}*B{K['gram']}/1000*(1+B{K['perda']}),0)", FMT_BRL)
-wsc.cell(row=K["cf"], column=4).value = "Calculado: custo por kg de massa × gramatura ÷ 1000 × (1 + perda)."
-calc(wsc, K["ce"], 2, f"='4. Embalagem'!G{L_EMB_CUSTO}", FMT_BRL, link=True)
-wsc.cell(row=K["ce"], column=4).value = "Puxado da aba 4 (soma dos componentes de embalagem)."
-calc(wsc, K["cpv"], 2,
-     f"=B{K['cf']}+B{K['ce']}+B{K['conv']}+B{K['frete']}", FMT_BRL)
-wsc.cell(row=K["cpv"], column=4).value = "Calculado: fórmula + embalagem + conversão + frete. É a base de toda a precificação abaixo."
-wsc.cell(row=K["cpv"], column=1).fill = PatternFill("solid", fgColor=ROSA_CLARO)
-
-# ------------------------------------------------------- 5.3 precificacao
-itens_preco = [
-    ("gond",     "Preço-alvo de gôndola (com impostos)",     None, "R$/un.", FMT_BRL, "Ancorado no benchmark da aba 2. Comece pelo que o consumidor aceita pagar, não pelo custo.", False),
-    ("mkvar",    "Margem do varejo sobre o preço de fábrica", None, "%",     FMT_PCT, "Quanto o cliente marca em cima. Varia por canal — atacarejo e farma são muito diferentes.", False),
-    ("pf",       "Preço de fábrica implícito",               None, "R$/un.", FMT_BRL, "", False),
-    ("imp",      "Carga tributária sobre faturamento",       None, "%",      FMT_PCT, "Soma dos tributos incidentes sobre a venda. Confirmar com a Contabilidade o regime aplicável.", False),
-    ("desc",     "Descontos e verbas comerciais",            None, "%",      FMT_PCT, "Bonificação, verba de encarte, rebate, devolução. Costuma ser o vazamento invisível da margem.", False),
-    ("rl",       "Receita líquida por unidade",              None, "R$/un.", FMT_BRL, "", False),
-    ("mc",       "Margem de contribuição por unidade",       None, "R$/un.", FMT_BRL, "", False),
-    ("mcpct",    "Margem de contribuição (%)",               None, "%",      FMT_PCT, "", False),
-    ("markup",   "Markup sobre o custo industrial",          None, "x",      '0.00"x"', "", False),
-    ("mcalvo",   "Margem de contribuição-alvo (briefing)",   None, "%",      FMT_PCT, "", True),
-    ("pfmin",    "Preço de fábrica mínimo p/ atingir o alvo", None, "R$/un.", FMT_BRL, "", False),
-    ("gondmin",  "Preço de gôndola mínimo p/ atingir o alvo", None, "R$/un.", FMT_BRL, "", False),
-    ("veredito", "Veredito de precificação",                 None, "",       None,     "", False),
-]
-r, P = bloco(wsc, r, "5.3 PRECIFICAÇÃO E MARGEM", itens_preco)
-
-calc(wsc, P["pf"], 2, f"=IFERROR(B{P['gond']}/(1+B{P['mkvar']}),0)", FMT_BRL)
-wsc.cell(row=P["pf"], column=4).value = "Calculado: preço de gôndola ÷ (1 + margem do varejo)."
-calc(wsc, P["rl"], 2, f"=IFERROR(B{P['pf']}*(1-B{P['imp']}-B{P['desc']}),0)", FMT_BRL)
-wsc.cell(row=P["rl"], column=4).value = "Calculado: preço de fábrica × (1 − impostos − descontos)."
-calc(wsc, P["mc"], 2, f"=B{P['rl']}-B{K['cpv']}", FMT_BRL)
-wsc.cell(row=P["mc"], column=4).value = "Calculado: receita líquida − custo industrial total."
-calc(wsc, P["mcpct"], 2, f'=IF(B{P["rl"]}=0,0,B{P["mc"]}/B{P["rl"]})', FMT_PCT)
-wsc.cell(row=P["mcpct"], column=4).value = "Calculado: margem de contribuição ÷ receita líquida. É o número que a Diretoria olha primeiro."
-calc(wsc, P["markup"], 2, f'=IF(B{K["cpv"]}=0,0,B{P["pf"]}/B{K["cpv"]})', '0.00"x"')
-wsc.cell(row=P["markup"], column=4).value = "Calculado: preço de fábrica ÷ custo industrial."
-calc(wsc, P["mcalvo"], 2, f"='1. Briefing'!B{LIN_META_MC}", FMT_PCT, link=True)
-wsc.cell(row=P["mcalvo"], column=4).value = "Puxado da aba 1 (célula 1.3)."
-calc(wsc, P["pfmin"], 2,
-     f'=IFERROR(B{K["cpv"]}/((1-B{P["mcalvo"]})*(1-B{P["imp"]}-B{P["desc"]})),0)', FMT_BRL)
-wsc.cell(row=P["pfmin"], column=4).value = "Calculado: custo industrial ÷ [(1 − MC alvo) × (1 − impostos − descontos)]. Abaixo disso, o projeto não entrega a margem prometida."
-calc(wsc, P["gondmin"], 2, f"=IFERROR(B{P['pfmin']}*(1+B{P['mkvar']}),0)", FMT_BRL)
-wsc.cell(row=P["gondmin"], column=4).value = "Calculado: preço de fábrica mínimo × (1 + margem do varejo). Compare com o benchmark da aba 2: se estourar o teto da categoria, o problema é de custo, não de preço."
-calc(wsc, P["veredito"], 2,
-     f'=IF(B{P["rl"]}=0,"Preencha as premissas",'
-     f'IF(B{P["mcpct"]}>=B{P["mcalvo"]},"APROVADO — margem acima do alvo",'
-     f'IF(B{P["mcpct"]}>=B{P["mcalvo"]}*0.9,"ATENÇÃO — até 10% abaixo do alvo","REPROVADO — margem insuficiente")))')
-wsc.cell(row=P["veredito"], column=4).value = "Regra automática comparando a margem calculada com a margem-alvo do briefing."
-wsc.cell(row=P["veredito"], column=1).fill = PatternFill("solid", fgColor=ROSA_CLARO)
-
-# ---------------------------------------------------------- 5.4 equilibrio
-itens_be = [
-    ("fixos",  "Custos fixos incrementais mensais",   None, "R$/mês", FMT_BRL0, "Só o que o projeto adiciona: pessoas, aluguel de linha, sistema, depreciação do ferramental.", False),
-    ("mkt",    "Investimento de marketing mensal",    None, "R$/mês", FMT_BRL0, "Mídia, trade, degustação, encarte, ativação.", False),
-    ("total",  "Compromisso fixo mensal total",       None, "R$/mês", FMT_BRL0, "", False),
-    ("beun",   "Volume mensal de equilíbrio",         None, "un./mês", FMT_NUM, "", False),
-    ("bereal", "Volume mensal previsto (Ano 1)",      None, "un./mês", FMT_NUM, "", True),
-    ("folga",  "Folga sobre o ponto de equilíbrio",   None, "%",       FMT_PCT, "", False),
-]
-r, B = bloco(wsc, r, "5.4 PONTO DE EQUILÍBRIO", itens_be)
-calc(wsc, B["total"], 2, f"=B{B['fixos']}+B{B['mkt']}", FMT_BRL0)
-wsc.cell(row=B["total"], column=4).value = "Calculado: fixos + marketing."
-calc(wsc, B["beun"], 2, f'=IF(B{P["mc"]}<=0,0,B{B["total"]}/B{P["mc"]})', FMT_NUM)
-wsc.cell(row=B["beun"], column=4).value = "Calculado: compromisso fixo ÷ margem de contribuição unitária. Quantas unidades por mês só para empatar."
-calc(wsc, B["bereal"], 2, f"=IFERROR('1. Briefing'!B{LIN_META_VOL}/12,0)", FMT_NUM, link=True)
-wsc.cell(row=B["bereal"], column=4).value = "Puxado da aba 1: meta de volume do Ano 1 ÷ 12."
-calc(wsc, B["folga"], 2, f'=IF(B{B["beun"]}=0,0,B{B["bereal"]}/B{B["beun"]}-1)', FMT_PCT)
-wsc.cell(row=B["folga"], column=4).value = "Calculado: volume previsto ÷ volume de equilíbrio − 1. Negativo significa que a meta não cobre nem o ponto de equilíbrio."
-
-# ------------------------------------------------------- 5.5 sensibilidade
-r = secao(wsc, r, "5.5 SENSIBILIDADE DE PREÇO E CUSTO", 7)
+# ---------------------------------------------- 5.3 grupo 2: embalagem
+r = secao(wsc, r, "5.3 GRUPO 2 — EMBALAGEM", NC)
+r = nota_larga(wsc, r,
+    "Uma linha por componente, dos três níveis: primária (contato com o produto), secundária (cartucho, display) "
+    "e terciária (caixa de embarque, filme, palete). Na coluna Origem, diga se o item é comprado pronto ou "
+    "transformado internamente — se for transformado, calcule o custo por peça em 5.4 e traga o resultado para a coluna de preço.")
 r = cabecalho(wsc, r, [
-    "Cenário", "Variação no preço de gôndola", "Variação no custo industrial",
-    "Preço de gôndola (R$)", "Receita líquida (R$)", "MC unitária (R$)", "MC (%)",
+    "Componente", "Origem", "Qtd por unidade", "Unidade", "Preço bruto (R$/un.)",
+    "Frete inbound (R$/un.)", "Impostos recuperáveis (%)", "Custo líquido (R$/un.)",
+    "Refugo (%)", "Custo por unidade (R$)", "% do custo", "Fornecedor / nível",
+])
+EM_INI = r
+componentes_custo = [
+    ("Embalagem primária (frasco, pote, bisnaga, lata)", "Primária"),
+    ("Tampa, válvula, pump ou dosador", "Primária"),
+    ("Lacre, selo de indução ou vedante", "Primária"),
+    ("Rótulo, sleeve ou decoração", "Primária"),
+    ("Cartucho ou estojo", "Secundária"),
+    ("Bula, encarte ou brinde", "Secundária"),
+    ("Caixa de embarque", "Terciária"),
+    ("Filme, cantoneira e palete", "Terciária"),
+    ("Outro componente", ""),
+]
+for nome, nivel in componentes_custo:
+    txt(wsc, r, 1, nome, font=f_label, fill=fill_claro)
+    inp(wsc, r, 2)
+    inp(wsc, r, 3, fmt=FMT_NUM2)
+    inp(wsc, r, 4, "un.")
+    inp(wsc, r, 5, fmt=FMT_BRL)
+    inp(wsc, r, 6, fmt=FMT_BRL)
+    inp(wsc, r, 7, fmt=FMT_PCT)
+    calc(wsc, r, 8, f'=IF(E{r}="","",(E{r}+F{r})*(1-G{r}))', FMT_BRL)
+    inp(wsc, r, 9, fmt=FMT_PCT)
+    calc(wsc, r, 10, f'=IF(OR(C{r}="",E{r}=""),"",IFERROR(H{r}*C{r}/(1-I{r}),""))', FMT_BRL)
+    inp(wsc, r, 12, nivel)
+    wsc.row_dimensions[r].height = 22
+    r += 1
+EM_FIM = r - 1
+dv(wsc, '"Comprada pronta,Transformada internamente,Fornecida pelo terceirista"', f"B{EM_INI}:B{EM_FIM}")
+L_EM_SUB = r
+r = rodape(wsc, r, "Subtotal · embalagem", {10: (f"=SUM(J{EM_INI}:J{EM_FIM})", FMT_BRL)})
+r += 1
+
+# --------------------------- 5.4 calculadora de embalagem transformada
+r = secao(wsc, r, "5.4 CALCULADORA — COMPONENTE DE EMBALAGEM TRANSFORMADO INTERNAMENTE", NC)
+r = nota_larga(wsc, r,
+    "Use quando a empresa compra resina e produz a peça (injeção, sopro, extrusão) em vez de comprar pronta. "
+    "O resultado da última linha é o que deve ir para a coluna Preço bruto do componente correspondente em 5.3, "
+    "com frete e impostos recuperáveis zerados, porque já estão embutidos aqui.")
+r = cabecalho(wsc, r, ["Parâmetro", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+T_PESO = r
+r = par(wsc, r, "Peso da peça", None, "g", FMT_NUM2, "Peso da peça acabada, não da resina carregada.")
+T_RESINA = r
+r = par(wsc, r, "Preço da resina", None, "R$/kg", FMT_BRL, "Polietileno, PP, PET, PVC. Já líquido dos impostos recuperáveis.")
+T_MBPCT = r
+r = par(wsc, r, "Percentual de masterbatch e aditivos", 0.02, "%", FMT_PCT, "Pigmento, antiestático, UV.")
+T_MBPRECO = r
+r = par(wsc, r, "Preço do masterbatch", None, "R$/kg", FMT_BRL, "Costuma custar várias vezes o preço da resina base.")
+T_MAT = r
+r = par(wsc, r, "Custo de material por peça",
+        f"=IFERROR(B{T_PESO}/1000*(B{T_RESINA}*(1-B{T_MBPCT})+B{T_MBPRECO}*B{T_MBPCT}),0)", "R$/peça", FMT_BRL,
+        "Calculado: peso × preço ponderado de resina e masterbatch.")
+T_REFUGO = r
+r = par(wsc, r, "Refugo de transformação", 0.03, "%", FMT_PCT, "Partida de máquina, peça fora de especificação, galho e canal.")
+T_MATREF = r
+r = par(wsc, r, "Custo de material com refugo", f"=IFERROR(B{T_MAT}/(1-B{T_REFUGO}),0)", "R$/peça", FMT_BRL,
+        "Calculado: custo de material ÷ (1 − refugo). Material reciclado internamente reduz esta perda — registre na observação.")
+T_CAV = r
+r = par(wsc, r, "Cavidades do molde", 1, "cavidades", FMT_NUM, "Quantas peças saem por ciclo.")
+T_CICLO = r
+r = par(wsc, r, "Tempo de ciclo", None, "segundos", FMT_NUM2, "Do fechamento à extração.")
+T_PPH = r
+r = par(wsc, r, "Peças por hora", f"=IFERROR(3600/B{T_CICLO}*B{T_CAV},0)", "peças/h", FMT_NUM,
+        "Calculado: 3600 ÷ ciclo × cavidades.")
+T_HORA = r
+r = par(wsc, r, "Custo hora-máquina de transformação", None, "R$/h", FMT_BRL,
+        "Energia, MOD da injetora, manutenção e depreciação da máquina. Se preferir, use a taxa de GGF por hora calculada em 5.6.")
+T_TRANSF = r
+r = par(wsc, r, "Custo de transformação por peça", f"=IFERROR(B{T_HORA}/B{T_PPH},0)", "R$/peça", FMT_BRL,
+        "Calculado: hora-máquina ÷ peças por hora.")
+T_MOLDE = r
+r = par(wsc, r, "Amortização do molde por peça", None, "R$/peça", FMT_BRL,
+        "Valor do molde ÷ número de peças que ele produzirá na vida útil. Zero se o molde já estiver amortizado.")
+T_TOTAL = r
+r = par(wsc, r, "CUSTO TOTAL DA PEÇA TRANSFORMADA",
+        f"=B{T_MATREF}+B{T_TRANSF}+B{T_MOLDE}", "R$/peça", FMT_BRL,
+        "Leve este valor para a coluna Preço bruto do componente correspondente em 5.3.", destaque=True)
+r += 1
+
+# ------------------------------------------------ 5.5 grupo 3: MOD
+r = secao(wsc, r, "5.5 GRUPO 3 — MÃO DE OBRA DIRETA (MOD)", NC)
+r = nota_larga(wsc, r,
+    "Só as pessoas que colocam a mão no produto. Supervisão, PCP, qualidade e almoxarifado são indiretos e entram no GGF (5.6). "
+    "O fator de encargos transforma salário em custo real: encargos sociais, férias, 13º, FGTS, rescisão, vale-transporte, "
+    "alimentação e plano de saúde. Peça o número ao RH em vez de estimar.")
+r = cabecalho(wsc, r, [
+    "Função", "Nº de pessoas", "Salário mensal (R$)", "Fator de encargos", "Custo mensal (R$)",
+    "Horas produtivas/mês", "Custo-hora (R$)", "Horas no lote", "Custo no lote (R$)",
+    "Custo por unidade (R$)", "% do custo", "Observação",
+])
+MOD_INI = r
+funcoes = [
+    "Operador de fabricação do granel",
+    "Operador de envase",
+    "Operador de embalagem e encaixotamento",
+    "Auxiliar de linha",
+    "Líder de linha",
+]
+for f_nome in funcoes:
+    txt(wsc, r, 1, f_nome, font=f_label, fill=fill_claro)
+    inp(wsc, r, 2, fmt=FMT_NUM)
+    inp(wsc, r, 3, fmt=FMT_BRL0)
+    inp(wsc, r, 4, 1.80, FMT_NUM2)
+    calc(wsc, r, 5, f"=IFERROR(B{r}*C{r}*D{r},0)", FMT_BRL0)
+    inp(wsc, r, 6, 176, FMT_NUM)
+    calc(wsc, r, 7, f"=IFERROR(E{r}/F{r},0)", FMT_BRL)
+    calc(wsc, r, 8, f"=$B${L_HTOT}", FMT_NUM2)
+    calc(wsc, r, 9, f"=G{r}*H{r}", FMT_BRL)
+    calc(wsc, r, 10, f"=IFERROR(I{r}/$B${L_LOTE},0)", FMT_BRL)
+    inp(wsc, r, 12)
+    wsc.row_dimensions[r].height = 22
+    r += 1
+MOD_FIM = r - 1
+L_MOD_SUB = r
+r = rodape(wsc, r, "Subtotal · mão de obra direta", {
+    5: (f"=SUM(E{MOD_INI}:E{MOD_FIM})", FMT_BRL0),
+    9: (f"=SUM(I{MOD_INI}:I{MOD_FIM})", FMT_BRL0),
+    10: (f"=SUM(J{MOD_INI}:J{MOD_FIM})", FMT_BRL),
+})
+r = nota_larga(wsc, r,
+    "O fator de encargos vem preenchido com 1,80 apenas como ordem de grandeza usual em indústria CLT — substitua pelo número real do RH. "
+    "176 horas/mês equivalem a 8 h em 22 dias úteis; ajuste conforme a jornada e os turnos praticados.")
+r += 1
+
+# ------------------------------------------------ 5.6 grupo 4: GGF
+r = secao(wsc, r, "5.6 GRUPO 4 — GASTOS GERAIS DE FABRICAÇÃO (GGF)", NC)
+r = nota_larga(wsc, r,
+    "Tudo que a fábrica consome e não dá para apontar direto no produto. Rateado por hora ocupada de linha: "
+    "GGF mensal ÷ horas produtivas da fábrica no mês = taxa por hora; a taxa multiplica as horas do lote e divide pelas unidades. "
+    "Quem rateia por unidade produzida distorce o custo de produto lento contra produto rápido.")
+r = cabecalho(wsc, r, [
+    "Item de GGF", "Natureza", "Valor mensal (R$)", "Comentário", "", "", "", "", "", "", "", "",
+])
+GGF_INI = r
+itens_ggf = [
+    ("Depreciação de máquinas, moldes e instalações", "Fixo", "Mesmo parado, o ativo se deprecia."),
+    ("Manutenção preventiva e corretiva", "Misto", "Peças, contratos e mão de obra de manutenção."),
+    ("Energia elétrica da produção", "Variável", "Se houver medição por linha, considere tratar como custo direto."),
+    ("Água, vapor, ar comprimido e utilidades", "Variável", "Água purificada tem custo próprio de tratamento em cosmético."),
+    ("Tratamento de efluentes e resíduos", "Misto", "Descarte de granel reprovado e lavagem de tanque."),
+    ("Supervisão de produção e PCP", "Fixo", "Não é MOD: não põe a mão no produto."),
+    ("Laboratório, controle de qualidade e microbiologia", "Fixo", "Estrutura; as análises por lote entram em 5.7."),
+    ("Almoxarifado, movimentação e empilhadeira", "Fixo", "Recebimento, separação e abastecimento de linha."),
+    ("Limpeza, sanitização e produtos de higienização", "Misto", "Custo alto e recorrente em linha de cosmético."),
+    ("Segurança do trabalho, EPI e uniformes", "Fixo", ""),
+    ("Ocupação: aluguel, condomínio, IPTU e seguros", "Fixo", "Ou custo de oportunidade do imóvel próprio."),
+    ("Outros gastos indiretos de fabricação", "", ""),
+]
+for nome, nat, obs in itens_ggf:
+    txt(wsc, r, 1, nome, font=f_label, fill=fill_claro)
+    inp(wsc, r, 2, nat)
+    inp(wsc, r, 3, fmt=FMT_BRL0)
+    wsc.merge_cells(start_row=r, start_column=4, end_row=r, end_column=NC)
+    txt(wsc, r, 4, obs, font=f_nota)
+    wsc.row_dimensions[r].height = 22
+    r += 1
+GGF_FIM = r - 1
+L_GGF_MES = r
+r = rodape(wsc, r, "GGF total mensal", {3: (f"=SUM(C{GGF_INI}:C{GGF_FIM})", FMT_BRL0)})
+r = cabecalho(wsc, r, ["Rateio do GGF", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+L_GGF_HORAS = r
+r = par(wsc, r, "Horas produtivas da fábrica no mês", None, "h", FMT_NUM,
+        "Horas em que as linhas efetivamente rodam. Usar a capacidade teórica joga custo para debaixo do tapete.")
+L_GGF_TAXA = r
+r = par(wsc, r, "Taxa de GGF por hora", f"=IFERROR(C{L_GGF_MES}/B{L_GGF_HORAS},0)", "R$/h", FMT_BRL,
+        "Calculado: GGF mensal ÷ horas produtivas.")
+L_GGF_UN = r
+r = par(wsc, r, "GGF rateado por unidade", f"=IFERROR(B{L_GGF_TAXA}*$B${L_HTOT}/$B${L_LOTE},0)", "R$/un.", FMT_BRL,
+        "Calculado: taxa por hora × horas do lote ÷ unidades do lote.")
+L_GGF_VAR = r
+r = par(wsc, r, "GGF variável medido por unidade", None, "R$/un.", FMT_BRL,
+        "Só se algum indireto for medido direto na unidade e não estiver na tabela acima. Cuidado para não contar duas vezes.")
+L_GGF_TOT = r
+r = par(wsc, r, "Total de GGF por unidade", f"=B{L_GGF_UN}+B{L_GGF_VAR}", "R$/un.", FMT_BRL,
+        "Calculado: rateio + variável medido.", destaque=True)
+r += 1
+
+# --------------------------------------- 5.7 outros custos de producao
+r = secao(wsc, r, "5.7 GRUPO 5 — OUTROS CUSTOS DE PRODUÇÃO", NC)
+r = nota_larga(wsc, r,
+    "Custos reais que não cabem nos quatro grupos clássicos e que costumam sumir da conta. "
+    "Cada linha tem a sua própria forma de cálculo, indicada na segunda coluna.")
+r = cabecalho(wsc, r, [
+    "Item", "Forma de cálculo", "Valor informado", "Unidade", "Referência", "", "", "", "",
+    "Custo por unidade (R$)", "% do custo", "Observação",
+])
+OUT_INI = r
+L_QC = r
+txt(wsc, r, 1, "Análises de qualidade por lote", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "Valor por lote ÷ lote", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_BRL0)
+txt(wsc, r, 4, "R$/lote", font=f_nota)
+txt(wsc, r, 5, "MP, granel, produto acabado, contraprova", font=f_nota)
+calc(wsc, r, 10, f"=IFERROR(C{r}/$B${L_LOTE},0)", FMT_BRL)
+inp(wsc, r, 12)
+r += 1
+L_AMOST = r
+txt(wsc, r, 1, "Amostras de retenção e contraprova", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "Unidades retidas × custo", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_NUM)
+txt(wsc, r, 4, "un./lote", font=f_nota)
+txt(wsc, r, 5, "Produto que sai do lote e não é vendido", font=f_nota)
+calc(wsc, r, 10, f"=IFERROR(C{r}/$B${L_LOTE}*(J{L_MP_SUB}+J{L_EM_SUB}),0)", FMT_BRL)
+inp(wsc, r, 12)
+r += 1
+L_FERR = r
+txt(wsc, r, 1, "Amortização de ferramental e moldes", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "Valor ÷ unidades projetadas", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_BRL0)
+txt(wsc, r, 4, "R$ total", font=f_nota)
+inp(wsc, r, 5, fmt=FMT_NUM)
+calc(wsc, r, 10, f"=IFERROR(C{r}/E{r},0)", FMT_BRL)
+inp(wsc, r, 12, "Informe as unidades projetadas na coluna Referência")
+r += 1
+L_ROY = r
+txt(wsc, r, 1, "Royalties e licenciamento", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "% sobre o preço de tabela", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_PCT)
+txt(wsc, r, 4, "%", font=f_nota)
+txt(wsc, r, 5, "Marca licenciada, personagem, fragrância exclusiva", font=f_nota)
+inp(wsc, r, 12)
+L_ROY_J = r
+r += 1
+L_TOLL = r
+txt(wsc, r, 1, "Taxa de terceirização (toll manufacturing)", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "Valor por unidade", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_BRL)
+txt(wsc, r, 4, "R$/un.", font=f_nota)
+txt(wsc, r, 5, "Se usar, zere MOD e GGF: já estão na taxa", font=f_nota)
+calc(wsc, r, 10, f"=C{r}", FMT_BRL)
+inp(wsc, r, 12)
+r += 1
+L_OBSOL = r
+txt(wsc, r, 1, "Perda por obsolescência e validade", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "% sobre material", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_PCT)
+txt(wsc, r, 4, "%", font=f_nota)
+txt(wsc, r, 5, "Embalagem com arte trocada, granel vencido", font=f_nota)
+calc(wsc, r, 10, f"=IFERROR(C{r}*(J{L_MP_SUB}+J{L_EM_SUB}),0)", FMT_BRL)
+inp(wsc, r, 12)
+r += 1
+L_CGIRO = r
+txt(wsc, r, 1, "Custo financeiro do estoque", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "Material × taxa × dias ÷ 360", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_PCT)
+txt(wsc, r, 4, "% ao ano", font=f_nota)
+inp(wsc, r, 5, fmt=FMT_NUM)
+calc(wsc, r, 10, f"=IFERROR((J{L_MP_SUB}+J{L_EM_SUB})*C{r}*E{r}/360,0)", FMT_BRL)
+inp(wsc, r, 12, "Informe os dias de estoque na coluna Referência")
+r += 1
+L_OUTRO = r
+txt(wsc, r, 1, "Outro custo de produção", font=f_label, fill=fill_claro)
+txt(wsc, r, 2, "Valor por unidade", font=f_nota)
+inp(wsc, r, 3, fmt=FMT_BRL)
+txt(wsc, r, 4, "R$/un.", font=f_nota)
+inp(wsc, r, 5)
+calc(wsc, r, 10, f"=C{r}", FMT_BRL)
+inp(wsc, r, 12)
+r += 1
+OUT_FIM = r - 1
+L_OUT_SUB = r
+r = rodape(wsc, r, "Subtotal · outros custos de produção",
+           {10: (f"=SUM(J{OUT_INI}:J{OUT_FIM})", FMT_BRL)})
+r += 1
+
+# ------------------------------------------ 5.8 ficha consolidada
+r = secao(wsc, r, "5.8 FICHA DE CUSTO CONSOLIDADA", NC)
+r = cabecalho(wsc, r, [
+    "Grupo de custo", "Custo por unidade (R$)", "% do custo industrial", "Custo do lote (R$)",
+    "O que entra", "", "", "", "", "", "", "",
+])
+FICHA_INI = r
+K = {}
+grupos = [
+    ("mp",  "Grupo 1 · Matérias-primas da formulação", f"=J{L_MP_SUB}",
+     "Insumos da fórmula, líquidos de impostos recuperáveis, com frete de entrada e perdas."),
+    ("emb", "Grupo 2 · Embalagem",                     f"=J{L_EM_SUB}",
+     "Primária, secundária e terciária, compradas prontas ou transformadas internamente."),
+    ("mod", "Grupo 3 · Mão de obra direta",            f"=J{L_MOD_SUB}",
+     "Quem põe a mão no produto, com encargos, rateado pelas horas do lote."),
+    ("ggf", "Grupo 4 · Gastos gerais de fabricação",   f"=B{L_GGF_TOT}",
+     "Indiretos da fábrica rateados por hora ocupada de linha."),
+    ("out", "Grupo 5 · Outros custos de produção",     f"=J{L_OUT_SUB}",
+     "Qualidade, ferramental, obsolescência, terceirização e custo financeiro do estoque."),
+]
+for chave, rot, form, oque in grupos:
+    txt(wsc, r, 1, rot, font=f_label, fill=fill_claro)
+    calc(wsc, r, 2, form, FMT_BRL, link=True)
+    K[chave] = r
+    r += 1
+FICHA_FIM = r - 1
+L_CPV = r
+K["cpv"] = r
+txt(wsc, r, 1, "CUSTO INDUSTRIAL TOTAL (CPV unitário)",
+    font=Font(name=FONTE, size=11, bold=True, color=ROSA_ESCURO), fill=fill_claro)
+calc(wsc, r, 2, f"=SUM(B{FICHA_INI}:B{FICHA_FIM})", FMT_BRL)
+calc(wsc, r, 3, f"=IF(B{r}=0,0,1)", FMT_PCT)
+calc(wsc, r, 4, f"=B{r}*$B${L_LOTE}", FMT_BRL0)
+wsc.merge_cells(start_row=r, start_column=5, end_row=r, end_column=NC)
+txt(wsc, r, 5, "Soma dos cinco grupos. É a base de toda a precificação abaixo.", font=f_nota)
+wsc.row_dimensions[r].height = 24
+r += 1
+for chave, rot, form, oque in grupos:
+    lin = K[chave]
+    calc(wsc, lin, 3, f"=IFERROR(B{lin}/$B${L_CPV},0)", FMT_PCT)
+    calc(wsc, lin, 4, f"=B{lin}*$B${L_LOTE}", FMT_BRL0)
+    wsc.merge_cells(start_row=lin, start_column=5, end_row=lin, end_column=NC)
+    txt(wsc, lin, 5, oque, font=f_nota)
+    wsc.row_dimensions[lin].height = 24
+# participacao por linha nas tabelas de detalhe
+for i in list(range(MP_INI, MP_FIM + 1)) + list(range(EM_INI, EM_FIM + 1)):
+    calc(wsc, i, 11, f'=IF(J{i}="","",IFERROR(J{i}/$B${L_CPV},""))', FMT_PCT)
+for i in range(MOD_INI, MOD_FIM + 1):
+    calc(wsc, i, 11, f"=IFERROR(J{i}/$B${L_CPV},0)", FMT_PCT)
+for i in range(OUT_INI, OUT_FIM + 1):
+    calc(wsc, i, 11, f'=IF(J{i}="","",IFERROR(J{i}/$B${L_CPV},""))', FMT_PCT)
+calc(wsc, L_MP_SUB, 11, f"=IFERROR(J{L_MP_SUB}/$B${L_CPV},0)", FMT_PCT)
+calc(wsc, L_EM_SUB, 11, f"=IFERROR(J{L_EM_SUB}/$B${L_CPV},0)", FMT_PCT)
+calc(wsc, L_MOD_SUB, 11, f"=IFERROR(J{L_MOD_SUB}/$B${L_CPV},0)", FMT_PCT)
+calc(wsc, L_OUT_SUB, 11, f"=IFERROR(J{L_OUT_SUB}/$B${L_CPV},0)", FMT_PCT)
+r += 1
+
+# ------------------------------ 5.9 impostos de venda e preco de tabela
+r = secao(wsc, r, "5.9 IMPOSTOS DE VENDA E FORMAÇÃO DO PREÇO", NC)
+r = nota_larga(wsc, r,
+    "Dois comportamentos diferentes. IPI e ICMS-ST são tributos POR FORA: entram na nota, o cliente paga, "
+    "mas não são receita da empresa — passam direto para o governo. ICMS próprio, PIS e COFINS são POR DENTRO: "
+    "já estão embutidos no preço de tabela e saem como dedução da receita bruta. "
+    "Confirme com a Contabilidade as alíquotas do regime tributário e do estado de destino antes de decidir preço.", altura=2)
+r = cabecalho(wsc, r, ["Item", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+P = {}
+L_PTAB = r
+P["pf"] = r
+r = par(wsc, r, "Preço de tabela (sem IPI e sem ST)", None, "R$/un.", FMT_BRL,
+        "O preço que sai na nota como valor da mercadoria. É a receita bruta da empresa.")
+L_AIPI = r
+r = par(wsc, r, "Alíquota de IPI", None, "%", FMT_PCT, "Por fora. Depende da NCM do produto.")
+L_AICMS = r
+P["imp"] = r
+r = par(wsc, r, "Alíquota de ICMS próprio", None, "%", FMT_PCT, "Por dentro. Varia por estado de origem e destino.")
+L_APIS = r
+r = par(wsc, r, "Alíquota de PIS", 0.0165, "%", FMT_PCT, "Por dentro. Valor usual do regime não cumulativo — confirme o seu.")
+L_ACOF = r
+r = par(wsc, r, "Alíquota de COFINS", 0.076, "%", FMT_PCT, "Por dentro. Valor usual do regime não cumulativo — confirme o seu.")
+L_AMVA = r
+r = par(wsc, r, "MVA / IVA-ST", None, "%", FMT_PCT,
+        "Margem de valor agregado da substituição tributária. Em higiene pessoal e cosméticos quase sempre há ST, e é ela que infla o preço na nota.")
+L_AICMSST = r
+r = par(wsc, r, "Alíquota de ICMS no destino (para a ST)", None, "%", FMT_PCT,
+        "Alíquota interna do estado onde o produto será vendido ao consumidor.")
+L_ADESC = r
+P["desc"] = r
+r = par(wsc, r, "Descontos, bonificações e devoluções", None, "%", FMT_PCT,
+        "Sobre o preço de tabela. É o vazamento invisível da margem: verba de encarte, bonificação em produto, rebate e devolução.")
+L_VIPI = r
+r = par(wsc, r, "Valor do IPI", f"=B{L_PTAB}*B{L_AIPI}", "R$/un.", FMT_BRL, "Calculado: preço de tabela × alíquota de IPI.")
+L_BASEST = r
+r = par(wsc, r, "Base de cálculo da ST", f"=(B{L_PTAB}+B{L_VIPI})*(1+B{L_AMVA})", "R$/un.", FMT_BRL,
+        "Calculado: (preço de tabela + IPI) × (1 + MVA).")
+L_VST = r
+r = par(wsc, r, "Valor do ICMS-ST retido",
+        f"=MAX(0,B{L_BASEST}*B{L_AICMSST}-B{L_PTAB}*B{L_AICMS})", "R$/un.", FMT_BRL,
+        "Calculado: ICMS sobre a base de ST menos o ICMS próprio já destacado.")
+L_NOTA = r
+r = par(wsc, r, "VALOR TOTAL NA NOTA (o que o cliente paga)",
+        f"=B{L_PTAB}+B{L_VIPI}+B{L_VST}", "R$/un.", FMT_BRL,
+        "Calculado: preço de tabela + IPI + ST. Este é o custo de aquisição do varejo, não o preço de tabela.", destaque=True)
+r += 1
+r = cabecalho(wsc, r, ["Da receita bruta à margem", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+L_RB = r
+r = par(wsc, r, "Receita bruta", f"=B{L_PTAB}", "R$/un.", FMT_BRL,
+        "Igual ao preço de tabela. IPI e ST não são receita.")
+L_DICMS = r
+r = par(wsc, r, "(−) ICMS próprio", f"=-B{L_PTAB}*B{L_AICMS}", "R$/un.", FMT_BRL, "Por dentro do preço.")
+L_DPIS = r
+r = par(wsc, r, "(−) PIS", f"=-B{L_PTAB}*B{L_APIS}", "R$/un.", FMT_BRL, "Por dentro do preço.")
+L_DCOF = r
+r = par(wsc, r, "(−) COFINS", f"=-B{L_PTAB}*B{L_ACOF}", "R$/un.", FMT_BRL, "Por dentro do preço.")
+L_DDESC = r
+r = par(wsc, r, "(−) Descontos, bonificações e devoluções", f"=-B{L_PTAB}*B{L_ADESC}", "R$/un.", FMT_BRL, "")
+L_RL = r
+P["rl"] = r
+r = par(wsc, r, "RECEITA LÍQUIDA", f"=B{L_RB}+B{L_DICMS}+B{L_DPIS}+B{L_DCOF}+B{L_DDESC}", "R$/un.", FMT_BRL,
+        "Calculado: receita bruta menos tributos por dentro e deduções comerciais.", destaque=True)
+L_CPVLINK = r
+r = par(wsc, r, "(−) Custo industrial (CPV)", f"=-B{L_CPV}", "R$/un.", FMT_BRL,
+        "Puxado da ficha consolidada em 5.8.", link=True)
+L_MB = r
+r = par(wsc, r, "MARGEM BRUTA", f"=B{L_RL}+B{L_CPVLINK}", "R$/un.", FMT_BRL,
+        "Calculado: receita líquida menos custo industrial.", destaque=True)
+L_MBP = r
+r = par(wsc, r, "Margem bruta (%)", f"=IF(B{L_RL}=0,0,B{L_MB}/B{L_RL})", "%", FMT_PCT,
+        "Calculado: margem bruta ÷ receita líquida. É a margem que a Diretoria persegue.")
+L_MARKUP = r
+r = par(wsc, r, "Markup sobre o custo industrial", f'=IF(B{L_CPV}=0,0,B{L_PTAB}/B{L_CPV})', "x", '0.00"x"',
+        "Calculado: preço de tabela ÷ custo industrial.")
+r += 1
+r = cabecalho(wsc, r, ["Despesas variáveis de venda", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+L_ACOM = r
+r = par(wsc, r, "Comissão de representantes", None, "%", FMT_PCT, "Sobre o preço de tabela.")
+L_AFRETE = r
+r = par(wsc, r, "Frete de saída e armazenagem", None, "%", FMT_PCT, "Se o frete for por conta da empresa (CIF).")
+L_AVERBA = r
+r = par(wsc, r, "Verba de trade e ações de canal", None, "%", FMT_PCT, "Contratos de gôndola, encarte, ponto extra.")
+L_DVAR = r
+r = par(wsc, r, "(−) Total de despesas variáveis",
+        f"=-B{L_PTAB}*(B{L_ACOM}+B{L_AFRETE}+B{L_AVERBA})", "R$/un.", FMT_BRL, "Calculado sobre o preço de tabela.")
+L_MC = r
+P["mc"] = r
+r = par(wsc, r, "MARGEM DE CONTRIBUIÇÃO", f"=B{L_MB}+B{L_DVAR}", "R$/un.", FMT_BRL,
+        "Calculado: margem bruta menos despesas variáveis de venda.", destaque=True)
+L_MCP = r
+P["mcpct"] = r
+r = par(wsc, r, "Margem de contribuição (%)", f"=IF(B{L_RL}=0,0,B{L_MC}/B{L_RL})", "%", FMT_PCT,
+        "Calculado: margem de contribuição ÷ receita líquida.")
+r += 1
+
+# royalties: agora que existe preco de tabela
+calc(wsc, L_ROY_J, 10, f"=IFERROR(C{L_ROY}*$B${L_PTAB},0)", FMT_BRL)
+
+# ------------------------------------- 5.10 do varejo para tras
+r = secao(wsc, r, "5.10 DO PREÇO DE PRATELEIRA PARA TRÁS", NC)
+r = nota_larga(wsc, r,
+    "O consumidor decide pelo preço de prateleira, não pelo nosso preço de tabela. Este bloco desce da prateleira "
+    "até a fábrica e mostra qual preço de tabela cabe dentro do preço que o mercado aceita — e qual margem bruta sobra.", altura=2)
+r = cabecalho(wsc, r, ["Item", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+L_PRAT = r
+P["gond"] = r
+r = par(wsc, r, "Preço de prateleira alvo (com impostos)", None, "R$/un.", FMT_BRL,
+        "Ancorado no benchmark de PDV da aba 2. Comece pelo que o consumidor aceita pagar.")
+L_MKVAR = r
+P["mkvar"] = r
+r = par(wsc, r, "Markup do varejo", None, "%", FMT_PCT,
+        "Quanto o cliente marca sobre o custo de aquisição. Atacarejo, farma e varejo tradicional são muito diferentes entre si.")
+L_AQUIS = r
+r = par(wsc, r, "Custo de aquisição do varejo", f"=IFERROR(B{L_PRAT}/(1+B{L_MKVAR}),0)", "R$/un.", FMT_BRL,
+        "Calculado: preço de prateleira ÷ (1 + markup do varejo). É o valor total da nota que o cliente aceita pagar.")
+L_FATOR = r
+r = par(wsc, r, "Fator de conversão nota → tabela",
+        f"=IF(B{L_AICMSST}=0,1+B{L_AIPI},(1+B{L_AIPI})*(1+(1+B{L_AMVA})*B{L_AICMSST})-B{L_AICMS})", "×", FMT_NUM2,
+        "Calculado: quanto o valor da nota é maior que o preço de tabela, considerando IPI e ST.")
+L_PTAB_IMP = r
+r = par(wsc, r, "Preço de tabela implícito no preço de prateleira",
+        f"=IFERROR(B{L_AQUIS}/B{L_FATOR},0)", "R$/un.", FMT_BRL,
+        "Calculado: custo de aquisição ÷ fator de conversão. É o máximo que dá para cobrar mantendo o preço de prateleira alvo.")
+L_DESVIO = r
+r = par(wsc, r, "Desvio do preço de tabela praticado",
+        f'=IF(B{L_PTAB_IMP}=0,"",IFERROR(B{L_PTAB}/B{L_PTAB_IMP}-1,""))', "%", FMT_PCT,
+        "Positivo significa que o nosso preço de tabela estoura o preço de prateleira alvo: ou o varejo comprime a própria margem, ou o produto sai mais caro na gôndola.")
+L_MBALVO = r
+r = par(wsc, r, "Margem bruta-alvo", f"='1. Briefing'!B{LIN_META_MC}", "%", FMT_PCT,
+        "Puxado da aba 1 (célula 1.3).", link=True)
+L_DEN = r
+r = par(wsc, r, "Fator de margem disponível",
+        f"=(1-B{L_AICMS}-B{L_APIS}-B{L_ACOF}-B{L_ADESC}-B{L_ACOM}-B{L_AFRETE}-B{L_AVERBA})"
+        f"-B{L_MBALVO}*(1-B{L_AICMS}-B{L_APIS}-B{L_ACOF}-B{L_ADESC})", "fator", FMT_NUM2,
+        "Calculado. Se este fator for zero ou negativo, nenhum preço atinge a margem-alvo: os impostos e as despesas variáveis já consomem tudo.")
+L_PTABMIN = r
+r = par(wsc, r, "Preço de tabela mínimo para a margem-alvo",
+        f'=IF(B{L_DEN}<=0,"Inviável",IFERROR(B{L_CPV}/B{L_DEN},0))', "R$/un.", FMT_BRL,
+        "Calculado: custo industrial ÷ fator de margem disponível.")
+L_NOTAMIN = r
+r = par(wsc, r, "Valor mínimo na nota",
+        f'=IF(B{L_DEN}<=0,"Inviável",IFERROR(B{L_PTABMIN}*B{L_FATOR},0))', "R$/un.", FMT_BRL,
+        "Calculado: preço de tabela mínimo × fator de conversão.")
+L_PRATMIN = r
+r = par(wsc, r, "Preço de prateleira mínimo",
+        f'=IF(B{L_DEN}<=0,"Inviável",IFERROR(B{L_NOTAMIN}*(1+B{L_MKVAR}),0))', "R$/un.", FMT_BRL,
+        "Calculado: valor mínimo na nota × (1 + markup do varejo). Compare com o teto da categoria no benchmark da aba 2.")
+L_VER = r
+P["veredito"] = r
+r = par(wsc, r,
+        "VEREDITO DE PRECIFICAÇÃO",
+        f'=IF(B{L_RL}=0,"Preencha as premissas",'
+        f'IF(B{L_MBALVO}=0,"Defina a margem-alvo no briefing",'
+        f'IF(B{L_MCP}>=B{L_MBALVO},"APROVADO — margem acima do alvo",'
+        f'IF(B{L_MCP}>=B{L_MBALVO}*0.9,"ATENÇÃO — até 10% abaixo do alvo","REPROVADO — margem insuficiente"))))',
+        "", None, "Compara a margem de contribuição calculada com a margem-alvo do briefing.", destaque=True)
+r += 1
+
+# ------------------------------------------- 5.11 ponto de equilibrio
+r = secao(wsc, r, "5.11 PONTO DE EQUILÍBRIO", NC)
+r = cabecalho(wsc, r, ["Item", "Valor", "Unidade", "Comentário", "", "", "", "", "", "", "", ""])
+B = {}
+L_FIXOS = r
+r = par(wsc, r, "Custos fixos incrementais mensais", None, "R$/mês", FMT_BRL0,
+        "Só o que o projeto adiciona: pessoas, aluguel de linha, sistema, depreciação do ferramental.")
+L_MKTM = r
+r = par(wsc, r, "Investimento de marketing mensal", None, "R$/mês", FMT_BRL0,
+        "Mídia, trade, degustação, encarte, ativação.")
+L_COMPR = r
+r = par(wsc, r, "Compromisso fixo mensal total", f"=B{L_FIXOS}+B{L_MKTM}", "R$/mês", FMT_BRL0, "Calculado: fixos + marketing.")
+L_BEUN = r
+B["beun"] = r
+r = par(wsc, r, "Volume mensal de equilíbrio",
+        f'=IF(B{L_MC}<=0,0,B{L_COMPR}/B{L_MC})', "un./mês", FMT_NUM,
+        "Calculado: compromisso fixo ÷ margem de contribuição unitária.")
+L_BEREAL = r
+r = par(wsc, r, "Volume mensal previsto (Ano 1)", f"=IFERROR('1. Briefing'!B{LIN_META_VOL}/12,0)", "un./mês", FMT_NUM,
+        "Puxado da aba 1: meta do Ano 1 ÷ 12.", link=True)
+L_FOLGA = r
+r = par(wsc, r, "Folga sobre o ponto de equilíbrio",
+        f'=IF(B{L_BEUN}=0,0,B{L_BEREAL}/B{L_BEUN}-1)', "%", FMT_PCT,
+        "Calculado. Negativo significa que a meta não cobre nem o ponto de equilíbrio.")
+L_LOTEBE = r
+r = par(wsc, r, "Lotes por mês no volume previsto", f"=IFERROR(B{L_BEREAL}/B{L_LOTE},0)", "lotes/mês", FMT_NUM2,
+        "Calculado: volume previsto ÷ tamanho do lote. Menos de um lote por mês significa que o rateio de MOD e GGF em 5.1 está otimista.")
+r += 1
+
+# ---------------------------------------------- 5.12 sensibilidade
+r = secao(wsc, r, "5.12 SENSIBILIDADE", NC)
+r = cabecalho(wsc, r, [
+    "Cenário", "Variação no preço de tabela", "Variação no custo industrial", "Preço de tabela (R$)",
+    "Receita líquida (R$)", "Custo industrial (R$)", "Margem bruta (R$)", "Margem bruta (%)",
+    "Margem de contribuição (%)", "", "", "",
 ])
 SENS_INI = r
-cenarios = [
+for nome, dp, dc in [
     ("Estresse duplo", -0.10, 0.10),
     ("Preço sob pressão", -0.10, 0.00),
     ("Custo sob pressão", 0.00, 0.10),
     ("Base", 0.00, 0.00),
     ("Cenário favorável", 0.05, -0.05),
-]
-for nome, dp, dc in cenarios:
+]:
     txt(wsc, r, 1, nome, font=f_label, fill=fill_claro)
     inp(wsc, r, 2, dp, FMT_PCT)
     inp(wsc, r, 3, dc, FMT_PCT)
-    calc(wsc, r, 4, f"=IFERROR($B${P['gond']}*(1+B{r}),0)", FMT_BRL)
-    calc(wsc, r, 5, f"=IFERROR(D{r}/(1+$B${P['mkvar']})*(1-$B${P['imp']}-$B${P['desc']}),0)", FMT_BRL)
-    calc(wsc, r, 6, f"=IFERROR(E{r}-$B${K['cpv']}*(1+C{r}),0)", FMT_BRL)
-    calc(wsc, r, 7, f'=IF(E{r}=0,0,F{r}/E{r})', FMT_PCT)
+    calc(wsc, r, 4, f"=$B${L_PTAB}*(1+B{r})", FMT_BRL)
+    calc(wsc, r, 5, f"=D{r}*(1-$B${L_AICMS}-$B${L_APIS}-$B${L_ACOF}-$B${L_ADESC})", FMT_BRL)
+    calc(wsc, r, 6, f"=$B${L_CPV}*(1+C{r})", FMT_BRL)
+    calc(wsc, r, 7, f"=E{r}-F{r}", FMT_BRL)
+    calc(wsc, r, 8, f'=IF(E{r}=0,0,G{r}/E{r})', FMT_PCT)
+    calc(wsc, r, 9, f'=IF(E{r}=0,0,(G{r}-D{r}*($B${L_ACOM}+$B${L_AFRETE}+$B${L_AVERBA}))/E{r})', FMT_PCT)
     wsc.row_dimensions[r].height = 22
     r += 1
 SENS_FIM = r - 1
-txt(wsc, r, 1, "Pior margem entre os cenários", font=f_label, fill=fill_cinza)
-for c in range(2, 7):
-    txt(wsc, r, c, "", fill=fill_cinza)
-calc(wsc, r, 7, f"=IFERROR(MIN(G{SENS_INI}:G{SENS_FIM}),0)", FMT_PCT)
-r += 1
-txt(wsc, r, 1, "Leitura", font=f_label, fill=fill_cinza)
-wsc.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
-txt(wsc, r, 2,
+r = rodape(wsc, r, "Pior margem de contribuição entre os cenários",
+           {9: (f"=IFERROR(MIN(I{SENS_INI}:I{SENS_FIM}),0)", FMT_PCT)})
+r = nota_larga(wsc, r,
     "Se a margem no cenário de estresse duplo já fica abaixo do alvo, o projeto não tem folga para negociar preço com o varejo "
-    "nem para absorver aumento de matéria-prima. Em caixa curto, projeto sem folga vira prejuízo no primeiro reajuste.",
-    font=f_nota)
-wsc.row_dimensions[r].height = 32
+    "nem para absorver reajuste de matéria-prima. Em caixa curto, projeto sem folga vira prejuízo no primeiro reajuste.", altura=2)
 
 
 # ===================================================== 6. VIABILIDADE
@@ -1155,9 +1672,9 @@ linha_ano(CPVT, "(−) Custo industrial", None,
           f"=-D{VOL}*'5. Custos'!$B${K['cpv']}",
           f"=-E{VOL}*'5. Custos'!$B${K['cpv']}",
           FMT_BRL0, "Volume × CPV unitário da aba 5.", link=True)
-linha_ano(MCT, "► Margem de contribuição", None,
+linha_ano(MCT, "► Margem bruta", None,
           f"=C{RLIQ}+C{CPVT}", f"=D{RLIQ}+D{CPVT}", f"=E{RLIQ}+E{CPVT}",
-          FMT_BRL0, "Receita líquida − custo industrial.", destaque=True)
+          FMT_BRL0, "Receita líquida − custo industrial. As despesas variáveis de venda estão detalhadas na aba 5.", destaque=True)
 linha_ano(DMKT, "(−) Marketing e trade", None,
           f"=-C{RLIQ}*$B${V['mkt']}", f"=-D{RLIQ}*$B${V['mkt']}", f"=-E{RLIQ}*$B${V['mkt']}",
           FMT_BRL0, "Percentual da receita líquida definido em 6.1.")
@@ -1221,9 +1738,9 @@ ind = [
      f'IF(B{INV_TOT}<=\'1. Briefing\'!B{LIN_CAPEX_MAX},"Dentro do teto autorizado","ESTOURA o teto autorizado"))',
      None,
      "Confronta o investimento total com o teto declarado na aba 1."),
-    ("Margem de contribuição consolidada — Ano 1",
+    ("Margem bruta consolidada — Ano 1",
      f'=IF(C{RLIQ}=0,0,C{MCT}/C{RLIQ})', FMT_PCT,
-     "Deve bater com a margem unitária da aba 5. Divergência indica premissa inconsistente."),
+     "Deve bater com a margem bruta unitária da aba 5. Divergência indica premissa inconsistente."),
 ]
 IND_INI = r
 for rot, form, fmt, leitura in ind:
@@ -1653,8 +2170,16 @@ r = secao(wsb, r, "1.9 PAINEL CONSOLIDADO — CALCULADO PELAS DEMAIS ABAS", 3)
 r = cabecalho(wsb, r, ["Indicador", "Valor", "Origem"])
 painel = [
     ("SOM — receita capturável no Ano 1",   f"='2. Mercado'!B{L_SOM}",          FMT_BRL0, "Aba 2 · dimensionamento"),
-    ("Preço de gôndola alvo",               f"='5. Custos'!B{P['gond']}",       FMT_BRL,  "Aba 5 · precificação"),
-    ("Custo industrial unitário",           f"='5. Custos'!B{K['cpv']}",        FMT_BRL,  "Aba 5 · BOM e conversão"),
+    ("Preço de prateleira alvo",            f"='5. Custos'!B{P['gond']}",       FMT_BRL,  "Aba 5 · precificação"),
+    ("Custo industrial unitário (CPV)",     f"='5. Custos'!B{K['cpv']}",        FMT_BRL,  "Aba 5 · ficha de custo"),
+    ("· matérias-primas da fórmula",        f"='5. Custos'!C{K['mp']}",         FMT_PCT,  "Aba 5 · participação no CPV"),
+    ("· embalagem",                         f"='5. Custos'!C{K['emb']}",        FMT_PCT,  "Aba 5 · participação no CPV"),
+    ("· mão de obra direta",                f"='5. Custos'!C{K['mod']}",        FMT_PCT,  "Aba 5 · participação no CPV"),
+    ("· gastos gerais de fabricação",       f"='5. Custos'!C{K['ggf']}",        FMT_PCT,  "Aba 5 · participação no CPV"),
+    ("· outros custos de produção",         f"='5. Custos'!C{K['out']}",        FMT_PCT,  "Aba 5 · participação no CPV"),
+    ("Preço de tabela",                     f"='5. Custos'!B{P['pf']}",         FMT_BRL,  "Aba 5 · impostos de venda"),
+    ("Valor total na nota (com IPI e ST)",  f"='5. Custos'!B{L_NOTA}",          FMT_BRL,  "Aba 5 · impostos de venda"),
+    ("Margem bruta (%)",                    f"='5. Custos'!B{L_MBP}",           FMT_PCT,  "Aba 5 · margem"),
     ("Margem de contribuição (%)",          f"='5. Custos'!B{P['mcpct']}",      FMT_PCT,  "Aba 5 · precificação"),
     ("Veredito de precificação",            f"='5. Custos'!B{P['veredito']}",   None,     "Aba 5 · regra automática"),
     ("Volume mensal de equilíbrio",         f"='5. Custos'!B{B['beun']}",       FMT_NUM,  "Aba 5 · ponto de equilíbrio"),
@@ -1681,6 +2206,11 @@ txt(wsb, r, 1,
     "Este painel é o resumo de uma página do projeto. Se ele não convence em 30 segundos, o projeto ainda não está pronto para o comitê.",
     font=Font(name=FONTE, size=10, italic=True, color=ROSA_ESCURO))
 wsb.row_dimensions[r].height = 24
+
+
+# ---------------- referencia cruzada resolvida no fim (aba 4 -> aba 5)
+calc(wse, L_EMB_CUSTO, 7, f"='5. Custos'!J{L_EM_SUB}", FMT_BRL, link=True)
+txt(wse, L_EMB_CUSTO, 9, "", fill=fill_cinza)
 
 
 # ------------------------------------------------------------------ saida
