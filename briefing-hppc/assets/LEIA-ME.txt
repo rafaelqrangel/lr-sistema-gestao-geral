@@ -1,0 +1,9 @@
+Coloque aqui o arquivo oficial do logo, com o nome:
+
+    logo-leite-de-rosas.png
+
+O formulário carrega esse arquivo automaticamente ao abrir. Alternativamente,
+clique na marca no topo do formulário e selecione o arquivo — ele fica salvo
+no navegador e passa a aparecer em todas as sessões.
+
+Rosa institucional: #EC008C
