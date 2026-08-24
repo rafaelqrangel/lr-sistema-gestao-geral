@@ -32,7 +32,7 @@ def põe(ws, rotulo, valor, col=2):
 
 # ============================================================ 1. BRIEFING
 VOL1, MB_ALVO = 600_000, 0.35
-põe(b, "Meta de volume — Ano 1 (un.)", VOL1)
+põe(b, "Meta de volume no Ano 1 (un.)", VOL1)
 põe(b, "Margem de contribuição-alvo (%)", MB_ALVO)
 põe(b, "Capex máximo autorizado", 400_000)
 
@@ -204,8 +204,8 @@ BEUN = (40_000 + 25_000) / MC
 # =========================================================== 6 e 7
 G2, G3, PMKT, PCOM, TAXA = 0.25, 0.15, 0.08, 0.06, 0.18
 põe(v, "Outros investimentos no Ano 0", 50_000)
-NOTAS = [4, 4, 3, 5, 4, 4, 5, 3, 4, 3]
-PESOS = [0.15, 0.15, 0.15, 0.10, 0.10, 0.08, 0.07, 0.10, 0.05, 0.05]
+NOTAS = [4, 4, 3, 5, 4, 4]
+PESOS = [0.20, 0.20, 0.20, 0.20, 0.12, 0.08]
 sc0 = linha(s, "Aderência à estratégia e à marca")
 for i, n in enumerate(NOTAS):
     s.cell(row=sc0 + i, column=3).value = n

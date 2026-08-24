@@ -21,7 +21,7 @@ perfumaria e cosméticos, com processo Stage-Gate e números que se recalculam s
 | 4. Embalagem | Especificação, fornecedor, MOQ, lead time, ferramental, rotulagem obrigatória e dados logísticos |
 | 5. Custos | **Ficha de custo completa**: 5 grupos de custo, impostos de venda, margem bruta, preço reverso e sensibilidade |
 | 6. Viabilidade | DRE incremental de 3 anos, investimento, fluxo de caixa, VPL, TIR, payback, ROI |
-| 7. Scorecard | 10 critérios ponderados, classificação automática, ranking contra a fila de projetos |
+| 7. Scorecard | 6 critérios ponderados, classificação automática, ranking contra a fila de projetos |
 | 8. Cronograma | 16 fases Stage-Gate com datas encadeadas e data prevista de gôndola |
 | 9. Riscos | Probabilidade × impacto, severidade, nível e controle de mitigações sem dono |
 | 10. Aprovação | Checklist de 22 itens por gate, síntese de uma página e registro de decisão |
@@ -141,3 +141,36 @@ abertura e salvamento no Excel) antes de distribuir o arquivo.
 - O dimensionamento de mercado é bottom-up a partir de premissas do usuário. Substitua por
   dado de Nielsen, Scanntech ou ABIHPEC quando houver, e registre a fonte na coluna prevista.
 - A taxa de desconto da aba 6 é premissa editável; alinhe com a Diretoria Financeira.
+
+
+## Ajustes de agosto/2026 — enxugar e tornar didático
+
+O briefing estava completo, mas comprido e escrito em jargão. O que mudou:
+
+- **Código do projeto agora é automático.** O formulário gera `BRF_<ano>_<nº>` sozinho, com
+  sequência por ano guardada no navegador, e o campo é somente leitura. Ninguém digita errado.
+  O botão **Novo briefing** limpa tudo e emite o código seguinte.
+- **"Gate atual" virou "Em que ponto o projeto está hoje"**, com as seis etapas escritas em
+  português comum ("2 · Conceito — conceito escrito, sem fórmula ainda").
+- **Campos "Outro" que abrem texto**: Marca (sub-marca, outra marca do portfólio ou marca nova),
+  Categoria, Tipo de projeto e Canal prioritário. O campo extra aparece só quando faz sentido
+  e é limpo automaticamente se a escolha mudar. O valor digitado vai para o XLSX exportado.
+- **Marcas guarda-chuva explícitas**: Leite de Rosas e Barla.
+- **Mínimo de caracteres** nos campos de texto que sustentam a decisão, com contador ao lado e
+  borda rosa enquanto falta. Impede o briefing de meia frase.
+- **Exemplo preenchido em cinza dentro de cada campo**, e as orientações reescritas em linguagem
+  direta — o que responder, com um exemplo concreto do próprio negócio.
+- **Cada seção ganhou uma linha explicando para que ela serve**, principalmente 1.4 (consumidor)
+  e 2 (mercado).
+- **Removido**: seção 1.7 Restrições, Solicitante, Patrocinador, Canais secundários,
+  Público-alvo secundário, Alavanca de marca e "O que este produto NÃO é". O Capex máximo
+  autorizado sobreviveu e passou para 1.3, porque a aba 6 compara o investimento com esse teto.
+- **Scorecard enxuto**: de 10 para 6 critérios, com os pesos redistribuídos. Saíram Sinergia
+  fabril, Velocidade até o mercado, Sustentabilidade da vantagem e Investimento requerido.
+- **Posicionamento e canibalização reescritos**: o modelo de frase agora está em português
+  ("PARA [quem compra], O [nosso produto] É O [tipo] QUE [o que faz de melhor], PORQUE [motivo]")
+  e a pergunta de canibalização pede as três coisas que importam — de qual produto nosso sai
+  o volume, quanto aceitamos perder e por que compensa.
+
+Verificação após os ajustes: 458 fórmulas recalculadas com 0 erros, 35/35 checagens numéricas OK,
+formulário sem erro de JavaScript no Chromium e XLSX exportado recalculado com 0 erros.

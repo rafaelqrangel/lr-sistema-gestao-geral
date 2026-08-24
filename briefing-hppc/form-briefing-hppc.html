@@ -72,6 +72,15 @@ section>h2 span{opacity:.75;font-weight:400;text-transform:none;letter-spacing:0
 .campo:last-child{margin-bottom:0}
 label{display:block;font-weight:bold;font-size:13.5px;margin-bottom:4px}
 .hint{font-size:12px;color:var(--tinta-fraca);margin:0 0 6px}
+.desc{
+  font-size:13px; color:var(--tinta-fraca); margin:0 0 16px; line-height:1.55;
+  padding:10px 12px; background:var(--rosa-claro); border-radius:7px;
+}
+.contador{font-size:11.5px;color:var(--tinta-fraca);margin:4px 0 0;text-align:right}
+.contador.curto{color:var(--rosa-escuro);font-weight:bold}
+input::placeholder,textarea::placeholder{color:#A9A9A9;font-style:italic}
+input[readonly]{background:#F1F1F1;color:var(--tinta-fraca);font-weight:bold;cursor:not-allowed}
+.campo.oculto{display:none}
 input,textarea,select{
   width:100%; font-family:inherit; font-size:14px; color:var(--tinta);
   padding:9px 11px; border:1px solid #CFCFCF; border-radius:7px; background:#FFFDF2;
@@ -169,6 +178,7 @@ footer{max-width:1100px;margin:0 auto;padding:8px 20px 30px;font-size:12px;color
       <div class="kpi"><b>Veredito</b><span id="kVer">—</span></div>
     </div>
     <div class="acoes">
+      <button class="sec" onclick="novoBriefing()">Novo briefing</button>
       <button class="sec" onclick="salvarJson()">Baixar rascunho (.json)</button>
       <button class="sec" onclick="document.getElementById('jsonInput').click()">Carregar rascunho</button>
       <button class="sec" onclick="window.print()">Imprimir</button>
@@ -190,104 +200,164 @@ footer{max-width:1100px;margin:0 auto;padding:8px 20px 30px;font-size:12px;color
 
 /* ------------------------------------------------------------ esquema */
 const SECOES = [
-  { id:'ident', t:'1.1 Identificação do projeto', g:2, f:[
-    {k:'codigo', l:'Código do projeto', h:'Padrão BRF_&lt;ano&gt;_&lt;nº&gt;. Ex.: BRF_2026_004.'},
-    {k:'nome', l:'Nome de trabalho', h:'Nome interno, não é o nome comercial.'},
-    {k:'marca', l:'Marca / arquitetura', tp:'select', o:['','Leite de Rosas — extensão de linha','Leite de Rosas — sub-marca','Outra marca do portfólio','Marca nova']},
-    {k:'categoria', l:'Categoria HPPC', tp:'select', o:['','Desodorante','Talco','Higiene corporal','Cuidado facial','Cabelos','Infantil','Perfumaria','Higiene íntima','Outra']},
-    {k:'tipo', l:'Tipo de projeto', tp:'select', o:['','Novo produto','Extensão de linha','Renovação de fórmula','Novo tamanho','Restyling de embalagem','Redução de custo']},
-    {k:'solicitante', l:'Solicitante / área'},
-    {k:'patrocinador', l:'Patrocinador (Diretoria)'},
+  { id:'ident', t:'1.1 Identificação do projeto', d:'Quem é o projeto. O código é gerado sozinho — você não precisa digitá-lo.', g:2, f:[
+    {k:'codigo', l:'Código do projeto', tp:'auto', h:'Gerado automaticamente no padrão BRF_ano_número. Não pode ser editado, para não haver dois projetos com o mesmo código.'},
+    {k:'nome', l:'Nome de trabalho', ph:'Ex.: Roll-on Leite de Rosas 50 ml', h:'Nome interno, só para a equipe conversar sobre o projeto. O nome comercial é decidido depois.'},
+    {k:'marca', l:'Marca', tp:'select', o:['','Leite de Rosas','Barla','Sub-marca de uma delas','Outra marca do portfólio','Marca nova'],
+     outro:{k:'marca_qual', l:'Qual marca? Escreva o nome', ph:'Ex.: Leite de Rosas Kids', quando:['Sub-marca de uma delas','Outra marca do portfólio','Marca nova']},
+     h:'Leite de Rosas e Barla são as marcas guarda-chuva. Se for sub-marca, outra marca do portfólio ou marca nova, escreva o nome no campo que abre ao lado.'},
+    {k:'categoria', l:'Categoria HPPC', tp:'select', o:['','Desodorante','Talco','Higiene corporal','Cuidado facial','Cabelos','Infantil','Perfumaria','Higiene íntima','Outra'],
+     outro:{k:'categoria_qual', l:'Qual categoria?', ph:'Ex.: Repelente corporal', quando:['Outra']}},
+    {k:'tipo', l:'Tipo de projeto', tp:'select', o:['','Novo produto','Extensão de linha','Renovação de fórmula','Novo tamanho','Restyling de embalagem','Redução de custo','Outro'],
+     outro:{k:'tipo_qual', l:'Qual? Descreva em poucas palavras', ph:'Ex.: substituição de fornecedor de fragrância', quando:['Outro']}},
+    {k:'etapa', l:'Em que ponto o projeto está hoje', tp:'select', o:['',
+      '1 · Ideia — só a ideia, nada validado',
+      '2 · Conceito — conceito escrito, sem fórmula ainda',
+      '3 · Viabilidade — custo e mercado já estimados',
+      '4 · Desenvolvimento — fórmula em teste no laboratório',
+      '5 · Industrialização — lote piloto rodando na fábrica',
+      '6 · Lançamento — pronto para vender'],
+     h:'Serve para o comitê saber o que já foi feito e o que ainda falta. Cada etapa só avança quando a anterior está fechada.'},
+    {k:'prioridade', l:'Prioridade declarada', tp:'select', o:['','Alta','Média','Baixa'],
+     h:'Alta significa que este projeto passa na frente dos outros na fila do laboratório e da fábrica. Use com parcimônia.'},
     {k:'dt_abertura', l:'Data de abertura', tp:'date'},
-    {k:'gate', l:'Gate atual', tp:'select', o:['','G0 Ideia','G1 Conceito','G2 Viabilidade','G3 Desenvolvimento','G4 Industrialização','G5 Lançamento']},
-    {k:'prioridade', l:'Prioridade declarada', tp:'select', o:['','Alta','Média','Baixa']},
   ]},
-  { id:'contexto', t:'1.2 Contexto e racional', g:1, f:[
-    {k:'problema', l:'Problema ou oportunidade', tp:'textarea', h:'Uma frase objetiva. O que justifica gastar dinheiro nisso.'},
-    {k:'porque_agora', l:'Por que agora', tp:'textarea', h:'Gatilho de timing: hábito, concorrente, canal, sazonalidade, regulação.'},
-    {k:'encaixe', l:'Encaixe estratégico', tp:'textarea', h:'Como reduz a concentração de faturamento em poucos SKUs, ou como defende o carro-chefe.'},
-    {k:'nao_fazer', l:'O que acontece se não fizermos', tp:'textarea', h:'O custo de não fazer. Se a resposta for "nada", o projeto não deveria existir.'},
-    {k:'alavanca', l:'Alavanca de marca utilizada', tp:'textarea', h:'Reconhecimento, território de frescor e cuidado, o rosa, tradição, distribuição.'},
+
+  { id:'contexto', t:'1.2 Por que este projeto existe', d:'A justificativa do investimento. Se você não conseguir responder as quatro perguntas abaixo com convicção, o projeto ainda não está pronto para ir ao comitê.', g:1, f:[
+    {k:'problema', l:'Que problema ou oportunidade este produto resolve', tp:'textarea', min:80,
+     ph:'Ex.: não temos desodorante roll-on, que é o formato que mais cresce no Nordeste, onde somos fortes. Quem quer roll-on da nossa marca hoje não encontra e leva o do concorrente.',
+     h:'Descreva o problema do negócio ou do consumidor, não a solução. A solução é o produto, e ela vem depois.'},
+    {k:'porque_agora', l:'Por que agora, e não daqui a dois anos', tp:'textarea', min:60,
+     ph:'Ex.: um concorrente acabou de entrar na faixa de preço que dominamos, e o atacarejo pediu um item nosso nesse formato para o sortimento de 2027.',
+     h:'Precisa existir um gatilho concreto: concorrente que se mexeu, canal pedindo, regra que mudou, sazonalidade, oportunidade de matéria-prima.'},
+    {k:'encaixe', l:'Como isso ajuda a empresa como um todo', tp:'textarea', min:60,
+     ph:'Ex.: hoje quase toda a receita vem de dois produtos. Este item cria uma terceira fonte de faturamento e aproveita a linha de envase que está ociosa.',
+     h:'Duas respostas costumam ser boas: reduz a dependência dos poucos produtos que sustentam a receita, ou protege o carro-chefe de um ataque de concorrente.'},
+    {k:'nao_fazer', l:'O que acontece se a gente não fizer nada', tp:'textarea', min:40,
+     ph:'Ex.: perdemos o espaço de gôndola no atacarejo, que já avisou que vai preencher o vão com marca própria.',
+     h:'Se a resposta honesta for "nada acontece", o projeto não deveria existir. Melhor descobrir isso agora do que depois de gastar.'},
   ]},
-  { id:'metas', t:'1.3 Objetivo e metas', g:2, f:[
-    {k:'objetivo', l:'Objetivo do produto (1 frase)', tp:'textarea', full:true},
-    {k:'meta_vol', l:'Meta de volume — Ano 1 (un.)', tp:'number', calc:true},
-    {k:'meta_rec', l:'Meta de receita líquida — Ano 1 (R$)', tp:'number'},
-    {k:'mc_alvo', l:'Margem de contribuição-alvo (%)', tp:'number', step:'0.1', calc:true, h:'Digite em pontos percentuais. Ex.: 35'},
-    {k:'meta_pdv', l:'Distribuição-alvo (nº de PDVs)', tp:'number'},
+
+  { id:'metas', t:'1.3 O que precisa entregar', d:'As metas do primeiro ano, em números. Meta sem número não pode ser cobrada nem comparada com outro projeto.', g:2, f:[
+    {k:'objetivo', l:'Objetivo do produto em uma frase', tp:'textarea', full:true, min:40,
+     ph:'Ex.: colocar a Leite de Rosas no roll-on com um item de entrada, vendendo 400 mil unidades com 32% de margem no primeiro ano.',
+     h:'Junte numa frase o que o produto faz e quanto ele precisa entregar.'},
+    {k:'meta_vol', l:'Meta de volume no Ano 1 (unidades)', tp:'number', calc:true,
+     h:'Quantas unidades vendidas no primeiro ano. Use o número que você defenderia numa reunião, não o otimista.'},
+    {k:'meta_rec', l:'Meta de receita líquida no Ano 1 (R$)', tp:'number',
+     h:'Receita já sem impostos e sem descontos comerciais. Se não souber, deixe em branco: a seção de custo calcula a partir do preço.'},
+    {k:'mc_alvo', l:'Margem de contribuição-alvo (%)', tp:'number', step:'0.1', calc:true,
+     h:'De cada R$ 100 vendidos, quanto sobra depois de tirar custo do produto, impostos, comissão e frete. Digite só o número. Ex.: 35.'},
+    {k:'meta_pdv', l:'Distribuição-alvo (nº de pontos de venda)', tp:'number',
+     h:'Em quantas lojas o produto precisa estar no fim do Ano 1. Ex.: 8000.'},
   ]},
-  { id:'consumidor', t:'1.4 Consumidor e ocasião de uso', g:1, f:[
-    {k:'publico1', l:'Público-alvo primário', tp:'textarea', h:'Demografia + comportamento. Demografia sozinha não é público-alvo.'},
-    {k:'publico2', l:'Público-alvo secundário'},
-    {k:'ocasiao', l:'Ocasião e frequência de uso', tp:'textarea'},
-    {k:'dor', l:'Dor / tensão do consumidor', tp:'textarea'},
-    {k:'insight', l:'Insight', tp:'textarea', h:'A verdade não óbvia que liga a dor ao produto. Se soa como slogan, ainda não é insight.'},
-    {k:'barreira', l:'Barreira de adoção esperada', tp:'textarea'},
+
+  { id:'consumidor', t:'1.4 Para quem é e quando se usa', d:'Esta seção existe para dar direção ao laboratório e à agência. É daqui que saem as decisões de fragrância, textura, tamanho de embalagem e preço. Sem ela, o time técnico trabalha no escuro e refaz depois.', g:1, f:[
+    {k:'publico1', l:'Quem é a pessoa que vai comprar', tp:'textarea', min:60,
+     ph:'Ex.: mulheres de 30 a 55 anos, classes C e D do Nordeste, que fazem a compra grande no atacarejo uma vez por mês e são fiéis a marcas que a mãe já usava.',
+     h:'Idade e classe social sozinhas não são público-alvo. Diga também como essa pessoa compra e o que ela valoriza.'},
+    {k:'ocasiao', l:'Quando e com que frequência ela usa', tp:'textarea', min:40,
+     ph:'Ex.: todo dia de manhã, logo depois do banho, antes de sair para o trabalho. Duas aplicações nos dias muito quentes.',
+     h:'A frequência define o tamanho da embalagem e o volume que a pessoa compra por ano — números que voltam na seção 2.'},
+    {k:'dor', l:'Qual é o incômodo que ela tem hoje', tp:'textarea', min:40,
+     ph:'Ex.: transpira muito no calor e os desodorantes que cabem no orçamento dela mancham a blusa de branco.',
+     h:'Escreva como a própria pessoa falaria, não em linguagem de marketing.'},
+    {k:'insight', l:'A virada por trás dessa dor', tp:'textarea', min:40,
+     ph:'Ex.: ela não quer "proteção 48 horas". Ela quer chegar no trabalho sem a mancha branca que todo mundo vê na axila.',
+     h:'O que está por baixo da dor e que ninguém na categoria está dizendo. Se a frase parece um slogan, ainda não é insight.'},
+    {k:'barreira', l:'O que faria essa pessoa não comprar', ph:'Ex.: preço acima do que ela paga hoje; desconfiança da nossa marca num formato novo.',
+     h:'Antecipar a objeção agora é mais barato do que descobri-la na pesquisa de conceito.'},
   ]},
-  { id:'conceito', t:'1.5 Conceito de produto', g:1, f:[
-    {k:'conceito', l:'Conceito em uma frase', tp:'textarea'},
-    {k:'benef1', l:'Benefício principal', h:'Um só. O que o consumidor lembraria 3 dias depois.'},
-    {k:'benef2', l:'Benefícios secundários', h:'No máximo dois. O terceiro dilui os outros.'},
-    {k:'rtb', l:'Reason to believe (RTB)', tp:'textarea'},
-    {k:'ativos', l:'Ativos / ingredientes-chave (INCI)', tp:'textarea'},
-    {k:'claims', l:'Claims pretendidos', tp:'textarea', h:'Separe claims de rotulagem dos publicitários. Cada um precisa de lastro.'},
-    {k:'sensorial', l:'Sensorial alvo', tp:'textarea', h:'Textura, absorção, toque residual, cor, fragrância e intensidade.'},
-    {k:'tamanhos', l:'Tamanhos / apresentações'},
-    {k:'benchmark_prod', l:'Produto de referência (benchmark)'},
-    {k:'nao_e', l:'O que este produto NÃO é', tp:'textarea'},
+
+  { id:'conceito', t:'1.5 O produto', d:'O que exatamente vai ser feito. Este é o bloco que o laboratório lê para começar a trabalhar.', g:1, f:[
+    {k:'conceito', l:'O produto em uma frase', tp:'textarea', min:40,
+     ph:'Ex.: desodorante roll-on 50 ml, sem álcool, fragrância clássica da marca, que não deixa marca branca na roupa.'},
+    {k:'benef1', l:'Benefício principal', ph:'Ex.: não mancha a roupa',
+     h:'Um só. É o que a pessoa lembraria três dias depois de usar.'},
+    {k:'benef2', l:'Benefícios secundários', ph:'Ex.: secagem rápida; perfume que dura o dia',
+     h:'No máximo dois. O terceiro dilui os outros e ninguém guarda.'},
+    {k:'rtb', l:'Por que acreditar nisso', tp:'textarea',
+     ph:'Ex.: base sem sais de alumínio, que são o que reage com o tecido e forma a mancha branca.',
+     h:'O motivo técnico que sustenta o benefício. É o que a área de regulatórios vai cobrar para liberar o claim.'},
+    {k:'ativos', l:'Ativos e ingredientes-chave (INCI)', tp:'textarea', ph:'Ex.: Aluminium Sesquichlorohydrate 15%, Cyclopentasiloxane, Parfum'},
+    {k:'claims', l:'Claims pretendidos', tp:'textarea',
+     ph:'Ex.: rótulo — "não mancha a roupa", "sem álcool". Publicidade — "48h de proteção".',
+     h:'Separe os claims de rótulo dos de publicidade. Cada um precisa de um teste que o comprove.'},
+    {k:'sensorial', l:'Como tem que ser ao usar', tp:'textarea',
+     ph:'Ex.: seca em até 10 segundos, sem toque pegajoso, fragrância floral leve reconhecível como Leite de Rosas.',
+     h:'Textura, tempo de secagem, toque que fica, cor, perfume e intensidade. É isto que o laboratório mede nos testes.'},
+    {k:'tamanhos', l:'Tamanhos e apresentações', ph:'Ex.: 50 ml único, com versão promocional leve 3 pague 2'},
+    {k:'benchmark_prod', l:'Produto de referência', ph:'Ex.: Rexona Clinical roll-on 50 ml',
+     h:'O produto que serve de régua para desempenho e preço. Compre um e deixe na mesa do laboratório.'},
   ]},
-  { id:'posic', t:'1.6 Posicionamento, preço e canal', g:2, f:[
-    {k:'posicionamento', l:'Posicionamento em uma frase', tp:'textarea', full:true, h:'Para &lt;público&gt;, &lt;produto&gt; é a &lt;categoria&gt; que &lt;benefício&gt; porque &lt;RTB&gt;.'},
-    {k:'faixa_preco', l:'Faixa de preço pretendida', tp:'select', o:['','Popular','Mainstream','Premium acessível','Premium']},
-    {k:'canal1', l:'Canal prioritário', tp:'select', o:['','Farma','Atacarejo','Supermercado','Varejo tradicional','Distribuidor','E-commerce / marketplace','Perfumaria']},
-    {k:'canal2', l:'Canais secundários'},
-    {k:'regioes', l:'Regiões prioritárias'},
-    {k:'canibal', l:'Risco de canibalização', tp:'textarea', full:true},
+
+  { id:'posic', t:'1.6 Posicionamento, preço e canal', d:'Onde o produto se encaixa na prateleira e na cabeça do consumidor.', g:2, f:[
+    {k:'posicionamento', l:'Posicionamento em uma frase', tp:'textarea', full:true, min:60,
+     ph:'Ex.: Para a mulher que trabalha fora e transpira muito no calor, o roll-on Leite de Rosas é o desodorante que não deixa mancha branca na roupa, porque usa uma base sem os sais que reagem com o tecido.',
+     h:'Complete este modelo: <b>Para</b> [quem compra], <b>o</b> [nosso produto] <b>é o</b> [tipo de produto] <b>que</b> [o que faz de melhor], <b>porque</b> [o motivo que faz acreditar].'},
+    {k:'faixa_preco', l:'Faixa de preço pretendida', tp:'select', o:['','Popular','Mainstream','Premium acessível','Premium'],
+     h:'Onde o produto fica em relação ao que já está na gôndola. Mainstream é preço parecido com o do líder da categoria.'},
+    {k:'canal1', l:'Canal prioritário', tp:'select', o:['','Farma','Atacarejo','Supermercado','Varejo tradicional','Distribuidor','E-commerce / marketplace','Perfumaria','Outros'],
+     outro:{k:'canal1_qual', l:'Qual canal?', ph:'Ex.: venda direta / revendedoras', quando:['Outros']},
+     h:'O canal onde o produto precisa dar certo primeiro. Ele define embalagem, tamanho e política de preço.'},
+    {k:'regioes', l:'Regiões prioritárias', ph:'Ex.: Nordeste e Sudeste, começando por PE, BA e SP'},
+    {k:'canibal', l:'Quanto de venda nossa este produto vai tirar', tp:'textarea', full:true,
+     ph:'Ex.: deve tirar cerca de 10% do volume do aerossol 150 ml no atacarejo. Aceitamos, porque a margem do roll-on é maior e o cliente ficaria com a gente de qualquer jeito.',
+     h:'Todo lançamento rouba alguma venda de dentro de casa. Diga <b>de qual produto nosso</b> ele vai tirar, <b>quanto</b> aceitamos perder e <b>por que compensa</b>. Se a resposta for "nenhuma", quase sempre é porque ainda não foi pensado.'},
   ]},
-  { id:'restr', t:'1.7 Restrições e condições de contorno', g:2, f:[
-    {k:'make_buy', l:'Make or buy', tp:'select', o:['','Produção interna','Terceirização (co-packer)','Híbrido']},
-    {k:'capex_max', l:'Capex máximo autorizado (R$)', tp:'number'},
-    {k:'prazo_max', l:'Prazo máximo até o lançamento (meses)', tp:'number'},
-    {k:'restr_fabril', l:'Restrições fabris / logísticas', tp:'textarea', full:true},
-    {k:'restr_reg', l:'Restrições regulatórias', tp:'textarea', full:true},
-    {k:'restr_marca', l:'Restrições de marca / jurídico', tp:'textarea', full:true},
-  ]},
-  { id:'sucesso', t:'1.8 Métricas de sucesso e critério de morte', g:2, f:[
-    {k:'kpi1', l:'KPI primário', h:'Uma métrica só, com número e data.'},
-    {k:'kpi2', l:'KPIs secundários', h:'No máximo três.'},
-    {k:'kill', l:'Critério de kill', tp:'textarea', full:true, h:'A condição objetiva que encerra o projeto. Definida antes, não depois.'},
+
+  { id:'sucesso', t:'1.7 Como saberemos que deu certo', d:'A régua de sucesso e a linha em que desistimos. Definir o critério de desistência antes é o que evita projeto que nunca morre.', g:2, f:[
+    {k:'kpi1', l:'Indicador principal', ph:'Ex.: 400 mil unidades vendidas até dez/2027',
+     h:'Um só, com número e data.'},
+    {k:'kpi2', l:'Indicadores secundários', ph:'Ex.: 8.000 PDVs; recompra de 25%; margem acima de 32%',
+     h:'No máximo três.'},
+    {k:'kill', l:'Em que situação encerramos o projeto', tp:'textarea', full:true, min:50,
+     ph:'Ex.: se o custo industrial passar de R$ 3,20 por unidade, ou se o teste com consumidor ficar abaixo de 60% de intenção de compra, o projeto para.',
+     h:'Uma condição objetiva, com número, escrita <b>antes</b> de começar. Depois que o time se apega ao projeto, ninguém mais consegue definir isso com isenção.'},
     {k:'dt_revisao', l:'Data da primeira revisão', tp:'date'},
   ]},
-  { id:'mercado', t:'2 · Dimensionamento de mercado', g:3, f:[
-    {k:'pop', l:'População do público-alvo (pessoas)', tp:'number', calc:true},
-    {k:'penetracao', l:'Penetração da categoria (%)', tp:'number', step:'0.1', calc:true},
-    {k:'freq', l:'Frequência de compra (un./ano)', tp:'number', step:'0.1', calc:true},
-    {k:'preco_medio', l:'Preço médio de gôndola da categoria (R$)', tp:'number', step:'0.01', calc:true},
-    {k:'cobertura', l:'Cobertura de distribuição alcançável (%)', tp:'number', step:'0.1', calc:true},
-    {k:'share', l:'Share-alvo dentro do SAM (%)', tp:'number', step:'0.1', calc:true},
-    {k:'fonte_mercado', l:'Fonte dos dados de mercado', full:true, h:'Nielsen, Scanntech, ABIHPEC, coleta própria de PDV, estimativa interna.'},
+
+  { id:'mercado', t:'2 · Quanto mercado existe', d:'Estimativa de quanto dinheiro existe nesta categoria e quanto dá para capturar. Preencha de cima para baixo — cada linha usa a anterior. Estimativa com critério vale mais que campo vazio; só anote de onde veio o número.', g:3, f:[
+    {k:'pop', l:'Quantas pessoas formam esse público', tp:'number', calc:true,
+     h:'O tamanho do público que você descreveu em 1.4. Ex.: 18000000 mulheres de 30 a 55 anos das classes C e D no Nordeste.'},
+    {k:'penetracao', l:'Penetração da categoria (%)', tp:'number', step:'0.1', calc:true,
+     h:'De cada 100 dessas pessoas, quantas compram esta categoria. Desodorante beira 90; creme facial fica perto de 25. Ex.: 88.'},
+    {k:'freq', l:'Frequência de compra (un./ano)', tp:'number', step:'0.1', calc:true,
+     h:'Quantas unidades cada compradora leva por ano. Um roll-on dura cerca de dois meses, então 6.'},
+    {k:'preco_medio', l:'Preço médio na gôndola (R$)', tp:'number', step:'0.01', calc:true,
+     h:'O que o consumidor paga hoje, na média da categoria. Vá ao PDV ou olhe o e-commerce. Ex.: 12,90.'},
+    {k:'cobertura', l:'Cobertura de distribuição alcançável (%)', tp:'number', step:'0.1', calc:true,
+     h:'Que parte desse mercado a nossa distribuição consegue alcançar. Ex.: 35, se somos fortes no Nordeste e fracos no Sul.'},
+    {k:'share', l:'Fatia que pretendemos tomar (%)', tp:'number', step:'0.1', calc:true,
+     h:'Do mercado que alcançamos, quanto dá para conquistar no Ano 1. Marca conhecida entrando em formato novo costuma ficar entre 2 e 6. Ex.: 4.'},
+    {k:'fonte_mercado', l:'De onde vieram esses números', full:true,
+     ph:'Ex.: penetração e frequência da Nielsen 2026; preço médio coletado em 12 PDVs em Recife em mai/2026; share estimado internamente.',
+     h:'Sem fonte, ninguém no comitê consegue discutir a premissa — só o resultado. Vale escrever "estimativa interna", desde que esteja escrito.'},
   ]},
-  { id:'custos', t:'5 · Ficha de custo do produto', g:3, f:[
-    {k:'gramatura', l:'Gramatura declarada (g ou ml)', tp:'number', step:'0.01', calc:true},
-    {k:'sobre_ench', l:'Sobre-enchimento médio (%)', tp:'number', step:'0.1', calc:true, h:'Encher 202 g para declarar 200 g é custo puro.'},
-    {k:'perda_granel', l:'Perda de granel no processo e envase (%)', tp:'number', step:'0.1', calc:true},
-    {k:'lote', l:'Tamanho do lote de produção (un.)', tp:'number', calc:true, h:'O custo unitário muda com o lote.'},
-    {k:'velocidade', l:'Velocidade da linha (un./h)', tp:'number', calc:true},
-    {k:'setup_h', l:'Horas de setup, limpeza e troca de lote', tp:'number', step:'0.1', calc:true},
+
+  { id:'custos', t:'5 · Ficha de custo do produto', d:'O custo real de fazer uma unidade, somando cinco grupos. Comece pelos parâmetros do lote abaixo: eles comandam o rateio de mão de obra e de gastos de fábrica.', g:3, f:[
+    {k:'gramatura', l:'Gramatura declarada (g ou ml)', tp:'number', step:'0.01', calc:true,
+     h:'O que está escrito no rótulo. Ex.: 50.'},
+    {k:'sobre_ench', l:'Sobre-enchimento médio (%)', tp:'number', step:'0.1', calc:true,
+     h:'O quanto se enche a mais para garantir o peso do rótulo. Encher 51 g para declarar 50 g é 2% de custo puro.'},
+    {k:'perda_granel', l:'Perda de granel no processo (%)', tp:'number', step:'0.1', calc:true,
+     h:'O que fica no tanque, na tubulação e no ajuste de máquina. Ex.: 2.'},
+    {k:'lote', l:'Tamanho do lote de produção (un.)', tp:'number', calc:true,
+     h:'O custo por unidade muda com o lote: setup e limpeza são diluídos entre as unidades produzidas.'},
+    {k:'velocidade', l:'Velocidade da linha (un./h)', tp:'number', calc:true,
+     h:'Quantas unidades a linha entrega por hora, na prática. Ex.: 3000.'},
+    {k:'setup_h', l:'Horas de setup, limpeza e troca de lote', tp:'number', step:'0.1', calc:true,
+     h:'Tempo em que a linha está parada por causa deste produto. Ex.: 3.'},
   ]},
 ];
 
 const CRITERIOS = [
-  ['Aderência à estratégia e à marca', 0.15],
-  ['Tamanho da oportunidade (SOM)', 0.15],
-  ['Margem de contribuição', 0.15],
-  ['Investimento requerido (quanto menor, melhor)', 0.10],
-  ['Velocidade até o mercado', 0.10],
-  ['Complexidade técnica e regulatória (quanto menor, melhor)', 0.08],
-  ['Sinergia fabril e logística', 0.07],
-  ['Força do conceito para o consumidor', 0.10],
-  ['Baixo risco de canibalização (quanto menor, melhor)', 0.05],
-  ['Sustentabilidade da vantagem', 0.05],
+  ['Aderência à estratégia e à marca', 0.20],
+  ['Tamanho da oportunidade (SOM)', 0.20],
+  ['Margem de contribuição', 0.20],
+  ['Força do conceito para o consumidor', 0.20],
+  ['Complexidade técnica e regulatória (quanto menor, melhor)', 0.12],
+  ['Baixo risco de canibalização (quanto menor, melhor)', 0.08],
 ];
 
 /* Valores e prazos informados pela equipe técnica da Leite de Rosas.
@@ -317,18 +387,29 @@ const cont = $('#form');
 function campoHtml(f){
   const id = 'f_'+f.k;
   const hint = f.h ? `<p class="hint">${f.h}</p>` : '';
+  const ph = f.ph ? ` placeholder="${esc(f.ph)}"` : '';
+  const mn = f.min ? ` data-min="${f.min}"` : '';
   let ctrl;
-  if(f.tp === 'textarea')      ctrl = `<textarea id="${id}" data-k="${f.k}"></textarea>`;
-  else if(f.tp === 'select')   ctrl = `<select id="${id}" data-k="${f.k}">${f.o.map(o=>`<option value="${esc(o)}">${esc(o||'—')}</option>`).join('')}</select>`;
-  else if(f.tp === 'number')   ctrl = `<input id="${id}" data-k="${f.k}" type="number" step="${f.step||'1'}" ${f.calc?'data-calc="1"':''}>`;
+  if(f.tp === 'auto')          ctrl = `<input id="${id}" data-k="${f.k}" type="text" readonly>`;
+  else if(f.tp === 'textarea') ctrl = `<textarea id="${id}" data-k="${f.k}"${ph}${mn}></textarea>`;
+  else if(f.tp === 'select')   ctrl = `<select id="${id}" data-k="${f.k}"${f.outro?` data-outro="${f.outro.k}" data-quando="${esc(f.outro.quando.join('|'))}"`:''}>${f.o.map(o=>`<option value="${esc(o)}">${esc(o||'—')}</option>`).join('')}</select>`;
+  else if(f.tp === 'number')   ctrl = `<input id="${id}" data-k="${f.k}" type="number" step="${f.step||'1'}"${ph} ${f.calc?'data-calc="1"':''}>`;
   else if(f.tp === 'date')     ctrl = `<input id="${id}" data-k="${f.k}" type="date">`;
-  else                         ctrl = `<input id="${id}" data-k="${f.k}" type="text">`;
-  return `<div class="campo" ${f.full?'style="grid-column:1/-1"':''}><label for="${id}">${f.l}</label>${hint}${ctrl}</div>`;
+  else                         ctrl = `<input id="${id}" data-k="${f.k}" type="text"${ph}${mn}>`;
+  const contador = f.min ? `<p class="contador" data-para="${f.k}"></p>` : '';
+  let out = `<div class="campo" ${f.full?'style="grid-column:1/-1"':''}><label for="${id}">${f.l}</label>${hint}${ctrl}${contador}</div>`;
+  if(f.outro){
+    const o = f.outro, oid = 'f_'+o.k;
+    out += `<div class="campo oculto" id="wrap_${o.k}"><label for="${oid}">${o.l}</label>` +
+           `<input id="${oid}" data-k="${o.k}" type="text"${o.ph?` placeholder="${esc(o.ph)}"`:''}></div>`;
+  }
+  return out;
 }
 
 let html = '';
 for(const s of SECOES){
   html += `<section id="s_${s.id}"><h2>${esc(s.t)}</h2><div class="corpo">
+    ${s.d ? `<p class="desc">${s.d}</p>` : ''}
     <div class="${s.g===1?'':'grade'+s.g}">${s.f.map(campoHtml).join('')}</div>`;
   if(s.id === 'mercado'){
     html += `<div class="tab-wrap" style="margin-top:14px"><table><thead><tr>
@@ -882,6 +963,9 @@ function aplicar(d){
     tr.querySelector('.sc-nota').value = d.score[i][1];
   });
   if(d.logo) aplicarLogo(d.logo);
+  garantirCodigo();
+  sincronizarTodosOsOutros();
+  conferirTodosOsMinimos();
   calcular();
 }
 let tSalvar;
@@ -1421,6 +1505,10 @@ function exportarXlsx(){
     for(const f of sec.f){
       const v = val(f.k);
       pb([T(f.l, S.ROT), f.tp === 'number' && v !== '' ? N(parseFloat(v), S.IN) : T(v, S.IN)]);
+      if(f.outro){
+        const vo = val(f.outro.k);
+        if(vo) pb([T('   ' + f.outro.l, S.ROT), T(vo, S.IN)]);
+      }
     }
     pb([]);
   }
@@ -1450,6 +1538,66 @@ function exportarXlsx(){
   baixar(montarXlsx(abas), nomeArquivo('xlsx'));
 }
 
+/* ---------------------------------------- código automático do projeto
+   Padrão BRF_<ano>_<nº>. O número é sequencial por ano, guardado no
+   navegador, e só é consumido quando o briefing é de fato um projeto novo. */
+function gerarCodigo(){
+  const ano = new Date().getFullYear();
+  let seq = 1;
+  try{
+    const g = JSON.parse(localStorage.getItem('lr_seq_briefing') || '{}');
+    seq = (g[ano] || 0) + 1;
+    g[ano] = seq;
+    localStorage.setItem('lr_seq_briefing', JSON.stringify(g));
+  }catch(e){}
+  return `BRF_${ano}_${String(seq).padStart(3,'0')}`;
+}
+function novoBriefing(){
+  if(!confirm('Isto limpa tudo o que está preenchido e abre um briefing novo, com um código novo. O rascunho salvo no navegador será perdido. Continuar?')) return;
+  localStorage.removeItem('lr_briefing_hppc');
+  location.reload();
+}
+function garantirCodigo(){
+  const el = document.querySelector('[data-k="codigo"]');
+  if(el && !el.value) el.value = gerarCodigo();
+}
+
+/* --------------------------------- campos condicionais ("Outro" / "Qual?") */
+function sincronizarOutro(sel){
+  const alvo = document.getElementById('wrap_' + sel.dataset.outro);
+  if(!alvo) return;
+  const gatilhos = (sel.dataset.quando || '').split('|');
+  const mostrar = gatilhos.includes(sel.value);
+  alvo.classList.toggle('oculto', !mostrar);
+  if(!mostrar){ const inp = alvo.querySelector('input'); if(inp) inp.value = ''; }
+}
+function sincronizarTodosOsOutros(){
+  document.querySelectorAll('select[data-outro]').forEach(sincronizarOutro);
+}
+document.querySelectorAll('select[data-outro]').forEach(sel => {
+  sel.addEventListener('change', () => { sincronizarOutro(sel); salvarLocal(); });
+});
+
+/* ------------------------------ mínimo de caracteres nos campos de texto */
+function conferirMinimo(el){
+  const min = parseInt(el.dataset.min, 10);
+  const cnt = document.querySelector(`.contador[data-para="${el.dataset.k}"]`);
+  if(!cnt) return;
+  const n = el.value.trim().length;
+  const falta = min - n;
+  cnt.textContent = falta > 0
+    ? (n === 0 ? `mínimo de ${min} caracteres` : `faltam ${falta} caracteres`)
+    : `${n} caracteres`;
+  cnt.classList.toggle('curto', falta > 0 && n > 0);
+  el.style.borderColor = (falta > 0 && n > 0) ? 'var(--rosa-escuro)' : '';
+}
+function conferirTodosOsMinimos(){
+  document.querySelectorAll('[data-min]').forEach(conferirMinimo);
+}
+document.querySelectorAll('[data-min]').forEach(el => {
+  el.addEventListener('input', () => conferirMinimo(el));
+});
+
 /* ------------------------------------------------------------- boot */
 document.querySelectorAll('[data-k]').forEach(el => {
   el.addEventListener('input', calcular);
@@ -1457,8 +1605,9 @@ document.querySelectorAll('[data-k]').forEach(el => {
 });
 try{
   const salvo = localStorage.getItem('lr_briefing_hppc');
-  if(salvo) aplicar(JSON.parse(salvo)); else calcular();
-}catch(e){ calcular(); }
+  if(salvo){ aplicar(JSON.parse(salvo)); }
+  else { garantirCodigo(); sincronizarTodosOsOutros(); conferirTodosOsMinimos(); calcular(); }
+}catch(e){ garantirCodigo(); sincronizarTodosOsOutros(); conferirTodosOsMinimos(); calcular(); }
 </script>
 </body>
 </html>

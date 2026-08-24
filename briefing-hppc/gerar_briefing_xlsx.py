@@ -292,93 +292,129 @@ wsb, r = nova_aba(
 r = secao(wsb, r, "1.1 IDENTIFICAÇÃO DO PROJETO", 3)
 r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
 LIN_CODIGO = r
-r = campo(wsb, r, "Código do projeto", "Padrão BRF_<ano>_<nº sequencial>. Ex.: BRF_2026_004.")
+r = campo(wsb, r, "Código do projeto",
+          "Padrão BRF_<ano>_<nº com 3 dígitos>. Ex.: BRF_2026_004. No formulário HTML ele é gerado sozinho; aqui, copie o código de lá.")
 LIN_NOME = r
-r = campo(wsb, r, "Nome de trabalho", "Nome interno, não é o nome comercial. Ex.: 'Desodorante Creme Sensitive'.")
+r = campo(wsb, r, "Nome de trabalho",
+          "Nome interno, só para a equipe conversar sobre o projeto. O nome comercial é decidido depois. Ex.: 'Roll-on Leite de Rosas 50 ml'.")
 LIN_MARCA = r
-r = campo(wsb, r, "Marca / arquitetura", "Leite de Rosas (extensão), Leite de Rosas sub-marca, marca do portfólio ou marca nova.")
+r = campo(wsb, r, "Marca",
+          "Leite de Rosas | Barla | Sub-marca de uma delas | Outra marca do portfólio | Marca nova. Nos três últimos casos, escreva ao lado qual é o nome.")
 LIN_CATEG = r
-r = campo(wsb, r, "Categoria HPPC", "Desodorante, higiene corporal, cuidado facial, cabelos, infantil, perfumaria, higiene íntima etc.")
-r = campo(wsb, r, "Tipo de projeto", "Novo produto | Extensão de linha | Renovação de fórmula | Novo tamanho | Restyling de embalagem | Redução de custo.")
-r = campo(wsb, r, "Solicitante / área", "Quem abriu a demanda e a área responsável pela defesa do projeto no gate.")
-r = campo(wsb, r, "Patrocinador (Diretoria)", "Diretor que responde pelo projeto perante a Diretoria Executiva.")
+r = campo(wsb, r, "Categoria HPPC",
+          "Desodorante | Talco | Higiene corporal | Cuidado facial | Cabelos | Infantil | Perfumaria | Higiene íntima | Outra (escreva qual).")
+r = campo(wsb, r, "Tipo de projeto",
+          "Novo produto | Extensão de linha | Renovação de fórmula | Novo tamanho | Restyling de embalagem | Redução de custo | Outro (descreva).")
+r = campo(wsb, r, "Em que ponto o projeto está hoje",
+          "1 Ideia (nada validado) | 2 Conceito (escrito, sem fórmula) | 3 Viabilidade (custo e mercado estimados) | "
+          "4 Desenvolvimento (fórmula em teste) | 5 Industrialização (lote piloto) | 6 Lançamento (pronto para vender). "
+          "Serve para o comitê saber o que já foi feito e o que falta.")
+r = campo(wsb, r, "Prioridade declarada",
+          "Alta | Média | Baixa. Alta significa passar na frente dos outros na fila do laboratório e da fábrica — use com parcimônia. "
+          "Prioridade declarada é hipótese; o Scorecard (aba 7) é o que vale.")
 LIN_DATA_ABERT = r
 r = campo(wsb, r, "Data de abertura", "Data em que o briefing foi aberto.", fmt=FMT_DATA)
-r = campo(wsb, r, "Gate atual", "G0 Ideia | G1 Conceito | G2 Viabilidade | G3 Desenvolvimento | G4 Industrialização | G5 Lançamento.")
-r = campo(wsb, r, "Prioridade declarada", "Alta | Média | Baixa. Prioridade declarada é hipótese; o Scorecard (aba 7) é o que vale.")
 
 r += 1
-r = secao(wsb, r, "1.2 CONTEXTO E RACIONAL — POR QUE ESTE PRODUTO, POR QUE AGORA", 3)
+r = secao(wsb, r, "1.2 POR QUE ESTE PROJETO EXISTE", 3)
 r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
-r = campo(wsb, r, "Problema ou oportunidade", "Uma frase objetiva. O que existe hoje no mercado ou no consumidor que justifica gastar dinheiro nisso.")
-r = campo(wsb, r, "Por que agora", "Gatilho de timing: mudança de hábito, movimento de concorrente, janela de canal, sazonalidade, mudança regulatória.")
-r = campo(wsb, r, "Encaixe estratégico", "Como reduz a concentração de faturamento em poucos SKUs, ou como defende o carro-chefe.")
-r = campo(wsb, r, "O que acontece se não fizermos", "O custo de não fazer. Se a resposta for 'nada', o projeto provavelmente não deveria existir.")
-r = campo(wsb, r, "Alavanca da marca usada", "Que ativo da Leite de Rosas o produto empresta: reconhecimento, território de frescor/cuidado, o rosa, tradição, distribuição.")
+r = campo(wsb, r, "Que problema ou oportunidade este produto resolve",
+          "Descreva o problema do negócio ou do consumidor, não a solução — a solução é o produto e vem depois. "
+          "Ex.: 'não temos roll-on, que é o formato que mais cresce no Nordeste, onde somos fortes'. Mínimo de 80 caracteres.")
+r = campo(wsb, r, "Por que agora, e não daqui a dois anos",
+          "Precisa existir um gatilho concreto: concorrente que se mexeu, canal pedindo, regra que mudou, sazonalidade, "
+          "oportunidade de matéria-prima. Mínimo de 60 caracteres.")
+r = campo(wsb, r, "Como isso ajuda a empresa como um todo",
+          "Duas respostas costumam ser boas: reduz a dependência dos poucos produtos que sustentam a receita, "
+          "ou protege o carro-chefe de um ataque de concorrente. Mínimo de 60 caracteres.")
+r = campo(wsb, r, "O que acontece se a gente não fizer nada",
+          "Se a resposta honesta for 'nada acontece', o projeto não deveria existir. Melhor descobrir agora do que depois de gastar.")
 
 r += 1
-r = secao(wsb, r, "1.3 OBJETIVO E METAS", 3)
+r = secao(wsb, r, "1.3 O QUE PRECISA ENTREGAR", 3)
 r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
-r = campo(wsb, r, "Objetivo do produto (1 frase)", "Comece com um verbo. Ex.: 'Capturar o consumidor de pele sensível que hoje troca a marca por dermocosmético'.")
+r = campo(wsb, r, "Objetivo do produto em uma frase",
+          "Junte numa frase o que o produto faz e quanto precisa entregar. "
+          "Ex.: 'colocar a Leite de Rosas no roll-on com um item de entrada, vendendo 400 mil unidades com 32% de margem no primeiro ano'.")
 LIN_META_VOL = r
-r = campo(wsb, r, "Meta de volume — Ano 1 (un.)", "Unidades vendidas no primeiro ano cheio. Este número alimenta a aba 6.", fmt=FMT_NUM)
-r = campo(wsb, r, "Meta de receita líquida — Ano 1", "Deve bater com o resultado calculado na aba 6. Se não bater, uma das duas premissas está errada.", fmt=FMT_BRL0)
+r = campo(wsb, r, "Meta de volume no Ano 1 (un.)",
+          "Quantas unidades vendidas no primeiro ano cheio. Use o número que você defenderia numa reunião, não o otimista. "
+          "Alimenta a aba 6.", fmt=FMT_NUM)
+r = campo(wsb, r, "Meta de receita líquida no Ano 1",
+          "Receita já sem impostos e sem descontos comerciais. Deve bater com o resultado da aba 6; "
+          "se não bater, uma das duas premissas está errada.", fmt=FMT_BRL0)
 LIN_META_MC = r
-r = campo(wsb, r, "Margem de contribuição-alvo (%)", "Piso de margem aceitável para o projeto seguir. Digite como percentual (ex.: 35%).", fmt=FMT_PCT)
-r = campo(wsb, r, "Distribuição-alvo (nº de PDVs)", "Pontos de venda ativos ao fim do Ano 1.", fmt=FMT_NUM)
+r = campo(wsb, r, "Margem de contribuição-alvo (%)",
+          "De cada R$ 100 vendidos, quanto sobra depois de custo do produto, impostos, comissão e frete. "
+          "É o piso para o projeto seguir. Digite como percentual (ex.: 35%).", fmt=FMT_PCT)
+r = campo(wsb, r, "Distribuição-alvo (nº de PDVs)",
+          "Em quantas lojas o produto precisa estar no fim do Ano 1. Ex.: 8.000.", fmt=FMT_NUM)
+LIN_CAPEX_MAX = r
+r = campo(wsb, r, "Capex máximo autorizado",
+          "Teto de investimento em máquina e ferramental para este projeto. A aba 6 compara o investimento total com este teto "
+          "e avisa se estourou. Deixe em branco se ainda não houver teto definido.", fmt=FMT_BRL0)
 
 r += 1
-r = secao(wsb, r, "1.4 CONSUMIDOR E OCASIÃO DE USO", 3)
+r = secao(wsb, r, "1.4 PARA QUEM É E QUANDO SE USA", 3)
 r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
-r = campo(wsb, r, "Público-alvo primário", "Demografia + comportamento. Demografia sozinha não é público-alvo.")
-r = campo(wsb, r, "Público-alvo secundário", "Quem também compra, mas não é para quem a comunicação fala.")
-r = campo(wsb, r, "Ocasião e frequência de uso", "Quando, onde, quantas vezes. Define tamanho de embalagem e giro.")
-r = campo(wsb, r, "Dor / tensão do consumidor", "A frustração real com as soluções atuais, na linguagem do consumidor.")
-r = campo(wsb, r, "Insight", "A verdade não óbvia que conecta a dor ao produto. Se soa como slogan, ainda não é insight.")
-r = campo(wsb, r, "Barreira de adoção esperada", "Preço, ceticismo quanto ao benefício, hábito consolidado, percepção de marca. E como derrubar.")
+r = campo(wsb, r, "Quem é a pessoa que vai comprar",
+          "Idade e classe social sozinhas não são público-alvo. Diga também como essa pessoa compra e o que valoriza. "
+          "Ex.: 'mulheres de 30 a 55 anos, classes C e D do Nordeste, que fazem a compra grande no atacarejo uma vez por mês'.")
+r = campo(wsb, r, "Quando e com que frequência ela usa",
+          "A frequência define o tamanho da embalagem e o volume comprado por ano — números que voltam na aba 2.")
+r = campo(wsb, r, "Qual é o incômodo que ela tem hoje",
+          "Escreva como a própria pessoa falaria, não em linguagem de marketing. "
+          "Ex.: 'transpira muito no calor e os desodorantes que cabem no orçamento dela mancham a blusa'.")
+r = campo(wsb, r, "A virada por trás dessa dor",
+          "O que está por baixo da dor e que ninguém na categoria está dizendo. Se a frase parece um slogan, ainda não é insight.")
+r = campo(wsb, r, "O que faria essa pessoa não comprar",
+          "Antecipar a objeção agora é mais barato do que descobri-la na pesquisa de conceito. "
+          "Preço, ceticismo quanto ao benefício, hábito consolidado, percepção de marca.")
 
 r += 1
-r = secao(wsb, r, "1.5 CONCEITO DE PRODUTO", 3)
+r = secao(wsb, r, "1.5 O PRODUTO", 3)
 r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
-r = campo(wsb, r, "Conceito em uma frase", "O que é, para quem, e o que entrega de diferente. Uma frase, sem adjetivo vazio.")
-r = campo(wsb, r, "Benefício principal", "Um só. O que o consumidor lembraria 3 dias depois.")
-r = campo(wsb, r, "Benefícios secundários", "No máximo dois. O terceiro dilui os outros.")
-r = campo(wsb, r, "Reason to believe (RTB)", "Por que acreditar: ativo, concentração, tecnologia, teste comprobatório, 96 anos de marca.")
-r = campo(wsb, r, "Ativos / ingredientes-chave", "Nome INCI e função. Marcar o que for claim-driver, pois exige comprovação.")
-r = campo(wsb, r, "Claims pretendidos", "Liste separando os claims de rotulagem dos claims publicitários. Cada um precisa de lastro (aba 3).")
-r = campo(wsb, r, "Sensorial alvo", "Textura, absorção, toque residual, cor, fragrância e intensidade.")
-r = campo(wsb, r, "Tamanhos / apresentações", "Grama­tura(s) e por que essa(s). Amarrar com ocasião de uso e preço de gôndola.")
-r = campo(wsb, r, "Produto de referência (benchmark)", "O produto que o consumidor usaria no lugar deste. Serve de âncora sensorial e de preço.")
-r = campo(wsb, r, "O que este produto NÃO é", "Delimitação explícita. Evita que o escopo cresça no meio do desenvolvimento.")
+r = campo(wsb, r, "O produto em uma frase", "O que é, para quem, e o que entrega de diferente. Uma frase, sem adjetivo vazio.")
+r = campo(wsb, r, "Benefício principal", "Um só. É o que a pessoa lembraria três dias depois de usar.")
+r = campo(wsb, r, "Benefícios secundários", "No máximo dois. O terceiro dilui os outros e ninguém guarda.")
+r = campo(wsb, r, "Por que acreditar nisso (RTB)",
+          "O motivo técnico que sustenta o benefício: ativo, concentração, tecnologia, teste comprobatório. "
+          "É o que Assuntos Regulatórios cobra para liberar o claim.")
+r = campo(wsb, r, "Ativos e ingredientes-chave (INCI)", "Nome INCI e função. Marque o que sustenta claim, pois exige comprovação.")
+r = campo(wsb, r, "Claims pretendidos",
+          "Separe os claims de rótulo dos de publicidade. Cada um precisa de um teste que o comprove (aba 3).")
+r = campo(wsb, r, "Como tem que ser ao usar",
+          "Textura, tempo de secagem, toque que fica, cor, perfume e intensidade. É isto que o laboratório mede nos testes.")
+r = campo(wsb, r, "Tamanhos e apresentações", "Gramatura(s) e por quê. Amarre com a ocasião de uso e com o preço de gôndola.")
+r = campo(wsb, r, "Produto de referência (benchmark)",
+          "O produto que serve de régua para desempenho e preço. Compre um e deixe na mesa do laboratório.")
 
 r += 1
 r = secao(wsb, r, "1.6 POSICIONAMENTO, PREÇO E CANAL", 3)
 r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
-r = campo(wsb, r, "Posicionamento em uma frase", "Para <público>, <produto> é a <categoria> que <benefício> porque <RTB>.")
-r = campo(wsb, r, "Faixa de preço pretendida", "Popular | Mainstream | Premium acessível | Premium. Coerente com marca e canal.")
-r = campo(wsb, r, "Canal prioritário", "Farma | Atacarejo | Supermercado | Varejo tradicional | Distribuidor | E-commerce/marketplace | Perfumaria.")
-r = campo(wsb, r, "Canais secundários", "Onde entra depois, e em que ordem.")
+r = campo(wsb, r, "Posicionamento em uma frase",
+          "Complete este modelo: PARA [quem compra], O [nosso produto] É O [tipo de produto] QUE [o que faz de melhor], "
+          "PORQUE [o motivo que faz acreditar].")
+r = campo(wsb, r, "Faixa de preço pretendida",
+          "Popular | Mainstream | Premium acessível | Premium. Mainstream é preço parecido com o do líder da categoria.")
+r = campo(wsb, r, "Canal prioritário",
+          "Farma | Atacarejo | Supermercado | Varejo tradicional | Distribuidor | E-commerce/marketplace | Perfumaria | Outros (escreva qual). "
+          "É o canal onde o produto precisa dar certo primeiro; ele define embalagem, tamanho e política de preço.")
 r = campo(wsb, r, "Regiões prioritárias", "Onde a distribuição já é forte tende a ser onde o lançamento custa menos.")
-r = campo(wsb, r, "Risco de canibalização", "Quais SKUs próprios podem perder volume, e qual perda é aceitável.")
+r = campo(wsb, r, "Quanto de venda nossa este produto vai tirar",
+          "Todo lançamento rouba alguma venda de dentro de casa. Diga de qual produto nosso ele vai tirar, quanto aceitamos perder "
+          "e por que compensa. Se a resposta for 'nenhuma', quase sempre é porque ainda não foi pensado.")
 
 r += 1
-r = secao(wsb, r, "1.7 RESTRIÇÕES E CONDIÇÕES DE CONTORNO", 3)
+r = secao(wsb, r, "1.7 COMO SABEREMOS QUE DEU CERTO", 3)
 r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
-r = campo(wsb, r, "Make or buy", "Produção interna | Terceirização (co-packer) | Híbrido. Terceirizar preserva caixa e acelera; interna dilui fixo.")
-LIN_CAPEX_MAX = r
-r = campo(wsb, r, "Capex máximo autorizado", "Teto de investimento em ativo e ferramental. Confrontar com a aba 6.", fmt=FMT_BRL0)
-r = campo(wsb, r, "Prazo máximo até o lançamento", "Em meses. Confrontar com o cronograma da aba 8.")
-r = campo(wsb, r, "Restrições fabris / logísticas", "Limitações de linha, envase, capacidade, paletização, armazenagem.")
-r = campo(wsb, r, "Restrições regulatórias", "Grau de risco, exigência de registro ou notificação, claims que demandam comprovação.")
-r = campo(wsb, r, "Restrições de marca / jurídico", "Registro de marca, colidência, uso do rosa institucional, trade dress.")
-
-r += 1
-r = secao(wsb, r, "1.8 MÉTRICAS DE SUCESSO E CRITÉRIO DE MORTE", 3)
-r = cabecalho(wsb, r, ["Campo", "Resposta", "Orientação de preenchimento"])
-r = campo(wsb, r, "KPI primário", "Uma métrica só. Ex.: unidades/mês no 6º mês; margem de contribuição %; nº de PDVs ativos.")
-r = campo(wsb, r, "KPIs secundários", "No máximo três, com meta numérica e data.")
-r = campo(wsb, r, "Critério de kill", "A condição objetiva que encerra o projeto. Definida antes, não depois. Ex.: 'MC < 25% no teste de custo real'.")
-r = campo(wsb, r, "Data da primeira revisão", "Quando o time volta a olhar os KPIs com o produto na rua.", fmt=FMT_DATA)
+r = campo(wsb, r, "Indicador principal", "Um só, com número e data. Ex.: '400 mil unidades vendidas até dez/2027'.")
+r = campo(wsb, r, "Indicadores secundários", "No máximo três, com meta numérica e data.")
+r = campo(wsb, r, "Em que situação encerramos o projeto",
+          "Uma condição objetiva, com número, escrita ANTES de começar. Ex.: 'se o custo industrial passar de R$ 3,20/un. "
+          "ou a intenção de compra ficar abaixo de 60%, o projeto para'. Depois que o time se apega ao projeto, "
+          "ninguém mais consegue definir isso com isenção.")
+r = campo(wsb, r, "Data da primeira revisão", "Quando o time volta a olhar os indicadores com o produto na rua.", fmt=FMT_DATA)
 
 r += 1
 LIN_CONSOL = r   # bloco 1.9 preenchido no fim do script
@@ -1766,26 +1802,18 @@ r = secao(wss, r, "7.1 CRITÉRIOS", 5)
 r = cabecalho(wss, r, ["Critério", "Peso", "Nota (1-5)", "Ponderado", "Como pontuar"])
 SC_INI = r
 criterios = [
-    ("Aderência à estratégia e à marca", 0.15,
-     "5 = usa o território da Leite de Rosas sem forçar. 1 = marca não tem autoridade nenhuma nessa promessa."),
-    ("Tamanho da oportunidade (SOM)", 0.15,
+    ("Aderência à estratégia e à marca", 0.20,
+     "5 = usa o território da Leite de Rosas sem forçar. 1 = a marca não tem autoridade nenhuma nessa promessa."),
+    ("Tamanho da oportunidade (SOM)", 0.20,
      "Ancorar no SOM da aba 2. 5 = move o ponteiro do faturamento. 1 = nicho que não paga o esforço."),
-    ("Margem de contribuição", 0.15,
-     "Ancorar no percentual da aba 5. 5 = bem acima da margem média da casa. 1 = abaixo do alvo."),
-    ("Investimento requerido (quanto menor, melhor)", 0.10,
-     "5 = quase sem capex, roda em ativo existente ou terceirizado. 1 = exige linha nova."),
-    ("Velocidade até o mercado", 0.10,
-     "5 = na gôndola em até 6 meses. 1 = mais de 18 meses."),
-    ("Complexidade técnica e regulatória (quanto menor, melhor)", 0.08,
-     "5 = fórmula conhecida, grau de risco 1. 1 = tecnologia nova e registro exigido."),
-    ("Sinergia fabril e logística", 0.07,
-     "5 = mesma linha, mesmo fornecedor, mesma caixa. 1 = tudo novo."),
-    ("Força do conceito para o consumidor", 0.10,
+    ("Margem de contribuição", 0.20,
+     "Ancorar no percentual da aba 5. 5 = bem acima da margem média da casa. 1 = abaixo do alvo do briefing."),
+    ("Força do conceito para o consumidor", 0.20,
      "Ancorar em teste de conceito. 5 = intenção de compra alta e benefício claro. 1 = ninguém entendeu."),
-    ("Baixo risco de canibalização (quanto menor, melhor)", 0.05,
-     "5 = volume vem de fora da casa. 1 = tira volume direto do carro-chefe."),
-    ("Sustentabilidade da vantagem", 0.05,
-     "5 = difícil de copiar em 12 meses. 1 = concorrente replica em um trimestre."),
+    ("Complexidade técnica e regulatória (quanto menor, melhor)", 0.12,
+     "5 = fórmula conhecida, grau de risco 1, sem registro. 1 = tecnologia nova e registro exigido."),
+    ("Baixo risco de canibalização (quanto menor, melhor)", 0.08,
+     "5 = o volume vem de fora de casa. 1 = tira volume direto do carro-chefe."),
 ]
 for nome, peso, como in criterios:
     txt(wss, r, 1, nome, font=f_label, fill=fill_claro)
@@ -1817,7 +1845,7 @@ L_SC_CLASSE = r
 txt(wss, r, 1, "CLASSIFICAÇÃO", font=Font(name=FONTE, size=11, bold=True, color=ROSA_ESCURO), fill=fill_claro)
 wss.merge_cells(start_row=r, start_column=2, end_row=r, end_column=4)
 calc(wss, r, 2,
-     f'=IF(COUNT(C{SC_INI}:C{SC_FIM})<10,"Incompleto — pontue todos os critérios",'
+     f'=IF(COUNT(C{SC_INI}:C{SC_FIM})<{SC_FIM-SC_INI+1},"Incompleto — pontue todos os critérios",'
      f'IF(D{L_SC_TOTAL}>=4,"PRIORIDADE MÁXIMA — entra na fila agora",'
      f'IF(D{L_SC_TOTAL}>=3.2,"APROVADO — entra na fila conforme capacidade",'
      f'IF(D{L_SC_TOTAL}>=2.5,"REVISAR — reformular conceito, custo ou escopo",'
